@@ -17,7 +17,7 @@ st.set_page_config(page_title="Generator Zaświadczeń MOPS", page_icon="📄", 
 # ==============================================================================
 BAZA_PRACOWNIKOW = [
     {
-        "klucz_nazwisko": "furmanek", # fraza do wykrycia przez OCR (małymi literami)
+        "klucz_nazwisko": "Furmanek", # fraza do wykrycia przez OCR (małymi literami)
         "imie": "Eryka Furmanek",
         "adres": "ul. Kościelna 9/10, 63-900 Ostrów Wlkp.",
         "firma_zatrudniajaca": "ABC Sp. z o.o., ul. Główna 1, 63-900 Ostrów Wlkp.",
