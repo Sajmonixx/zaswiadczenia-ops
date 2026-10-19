@@ -13,7 +13,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 # Ustawienia strony Streamlit
-st.set_page_config(page_title="Generator Zaświadczeń MOPS", page_icon="📄", layout="centered")
+st.set_page_config(page_title="Generator Zaświadczeń MOPS - Sajmon Software Company", page_icon="📄", layout="centered")
 
 # ==============================================================================
 # BAZA DANYCH PRACOWNIKÓW
@@ -133,7 +133,7 @@ def wykryj_miesiac(text):
             return f"{nazwa} {rok}"
     return f"wrzesień {rok}"
 
-st.title("📄 Generator Zaświadczenia dla MOPS")
+st.title("📄 Generator Zaświadczenia dla MOPS by Sajmon Software Company")
 st.write("Wgraj plik listy płac (zdjęcie JPG/PNG lub dokument PDF). System automatycznie rozpozna pracownika z bazy i przygotuje formularz.")
 
 uploaded_lista = st.file_uploader("Wgraj plik Listy Płac (Zdjęcie lub PDF)", type=["jpg", "jpeg", "png", "pdf"])
@@ -252,8 +252,7 @@ if uploaded_lista is not None:
             c.drawString(50, y, f"5. Składki na ubezpieczenie emerytalne i rentowe (część pracownika): {spoleczne:.2f} zł")
             y -= 20
             c.drawString(50, y, f"6. Kwota składki na ubezpieczenie chorobowe: {chorobowa:.2f} zł")
-            
-            y -= 30
+            y -= 20
             c.setFont(FONT_NAME, 10)
             c.drawString(50, y, f"7. DOCHÓD = 1 - (2+3+4+5+6): {dochod:.2f} zł")
             
