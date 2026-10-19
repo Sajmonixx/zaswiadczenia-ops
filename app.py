@@ -217,27 +217,26 @@ if uploaded_lista is not None:
             c.drawRightString(width - 50, height - 50, miejscowosc_data)
             
             # --- TYTUŁ DOKUMENTU ---
-            c.setFont(FONT_NAME, 9.5)
-            c.drawCentredString(width / 2, height - 115, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA Z TYTUŁU ZATRUDNIENIA DLA CELÓW POMOCY SPOŁECZNEJ")
+            c.setFont(FONT_NAME, 10)
+            c.drawCentredString(width / 2, height - 110, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA Z TYTUŁU ZATRUDNIENIA")
+            c.drawCentredString(width / 2, height - 124, "DLA CELÓW POMOCY SPOŁECZNEJ")
             
             # --- DANE OSOBOWE I ZATRUDNIENIA ---
             y = height - 150
             c.setFont(FONT_NAME, 9)
-            c.drawString(50, y, "Zaświadcza się, że Pan/i:")
+            c.drawString(50, y, "Zaświadcza się, że")
             y -= 15
-            c.drawString(70, y, f"{imie}")
+            c.drawString(50, y, f"Pan/i. {imie}")
             y -= 20
-            c.drawString(50, y, "zamieszkały(a):")
-            y -= 15
-            c.drawString(70, y, f"{adres}")
+            c.drawString(50, y, f"Zamieszkały(a) {adres}")
             y -= 20
-            c.drawString(50, y, f"jest zatrudniony(a) w:  {firma_zatrudniajaca}")
+            c.drawString(50, y, f"Jest zatrudniony (a) {firma_zatrudniajaca}")
             y -= 20
-            c.drawString(50, y, f"na podstawie: {umowa_rodzaj}    w okresie: {okres}")
+            c.drawString(50, y, f"na podstawie {umowa_rodzaj}    w okresie {okres}")
             y -= 20
-            c.drawString(50, y, f"na stanowisku:  {stanowisko}")
+            c.drawString(50, y, f"na stanowisku {stanowisko}")
             
-            # --- TABELA WYLIECZEŃ ---
+            # --- TABELA WYLICZEŃ ---
             y -= 30
             c.drawString(50, y, "1. Przychód z tytułu wynagrodzenia")
             y -= 15
@@ -249,7 +248,7 @@ if uploaded_lista is not None:
             y -= 20
             c.drawString(50, y, f"4. Kwota składki na ubezpieczenie zdrowotne: {zdrowotna:.2f} zł")
             y -= 20
-            c.drawString(50, y, f"5. Składki na ubezpieczenie emerytalne i rentowe (część pracownika): {spoleczne:.2f} zł")
+            c.drawString(50, y, f"5. Kwota składki na ubezpieczenie emerytalne i rentowe w części finansowanej przez Ubezpieczonego: {spoleczne:.2f} zł")
             y -= 20
             c.drawString(50, y, f"6. Kwota składki na ubezpieczenie chorobowe: {chorobowa:.2f} zł")
             y -= 20
@@ -260,7 +259,7 @@ if uploaded_lista is not None:
             y -= 90
             c.setFont(FONT_NAME, 9)
             c.drawRightString(width - 50, y, "....................................................................")
-            c.drawRightString(width - 50, y - 15, "pieczęć i podpis osoby upoważnionej")
+            c.drawRightString(width - 50, y - 15, "Pieczęć i podpis pracodawcy")
             
             c.save()
             st.session_state.pdf_generated = True
