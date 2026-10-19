@@ -13,16 +13,19 @@ from reportlab.pdfbase.ttfonts import TTFont
 # Ustawienia strony Streamlit
 st.set_page_config(page_title="Generator Zaświadczeń MOPS", page_icon="📄", layout="centered")
 
-# Pobranie i rejestracja darmowej czcionki Roboto dla polskich znaków
+# Pobranie i rejestracja czcionki z obsługą polskich znaków
 @st.cache_resource
 def setup_fonts():
     font_path = "Roboto-Regular.ttf"
     if not os.path.exists(font_path):
-        url = "https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Regular.ttf"
+        url = "https://raw.githubusercontent.com/google/fonts/main/ofl/roboto/static/Roboto-Regular.ttf"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         try:
-            urllib.request.urlretrieve(url, font_path)
-        except Exception:
+            with urllib.request.urlopen(req) as response, open(font_path, 'wb') as out_file:
+                out_file.write(response.read())
+        except Exception as e:
             pass
+    
     if os.path.exists(font_path):
         pdfmetrics.registerFont(TTFont("Roboto", font_path))
         return "Roboto"
