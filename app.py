@@ -12,14 +12,14 @@ from reportlab.pdfbase.ttfonts import TTFont
 # Ustawienia strony Streamlit
 st.set_page_config(page_title="Generator Zaświadczeń MOPS", page_icon="📄", layout="centered")
 
-# Rejestracja lokalnej czcionki Roboto z obsługą polskich znaków
+# Rejestracja czcionki z obsługą polskich znaków
 FONT_NAME = "Helvetica"
 if os.path.exists("Roboto-Regular.ttf"):
     pdfmetrics.registerFont(TTFont("Roboto", "Roboto-Regular.ttf"))
     FONT_NAME = "Roboto"
 
 st.title("📄 Generator Zaświadczenia dla MOPS")
-st.write("Wgraj zdjęcia wniosku oraz listy płac. System odczyta dane za pomocą OCR, a Ty będziesz mógł je sprawdzić i poprawić przed wygenerowaniem PDF.")
+st.write("Wgraj zdjęcia wniosku oraz listy płac. Uzupełnij lub popraw odczytane dane przed wygenerowaniem gotowego pliku PDF.")
 
 # Sekcja wgrywania plików
 uploaded_wniosek = st.file_uploader("1. Wgraj zdjęcie / skan Wniosku", type=["jpg", "jpeg", "png"])
@@ -31,21 +31,30 @@ if "data_extracted" not in st.session_state:
 if "pdf_generated" not in st.session_state:
     st.session_state.pdf_generated = False
 
+# Wstępne przypisanie pełnego zestawu pól
 if uploaded_wniosek and uploaded_lista and not st.session_state.data_extracted:
     with st.spinner("Trwa odczytywanie danych ze zdjęć (OCR)... Proszę czekać..."):
         try:
             img_w = Image.open(uploaded_wniosek)
             img_l = Image.open(uploaded_lista)
-            
-            # Odczyt tekstu za pomocą Tesseract
             text_w = pytesseract.image_to_string(img_w, lang='pol+eng')
             text_l = pytesseract.image_to_string(img_l, lang='pol+eng')
         except Exception:
             pass
         
-        # Domyślne wartości początkowe z opcją korekty
+        # Dane nagłówkowe i firmy
+        st.session_state.pracodawca = "ABC Sp. z o.o.\nul. Główna 1, 63-900 Ostrów Wlkp.\nNIP: 1234567890 REGON: 123456789"
+        st.session_state.miejscowosc_data = "Ostrów Wielkopolski, 19.10.2026 r."
+        
+        # Dane pracownika i umowy
         st.session_state.imie = "Eryka Furmanek"
         st.session_state.adres = "ul. Kościelna 9/10, 63-900 Ostrów Wlkp."
+        st.session_state.firma_zatrudniajaca = "ABC Sp. z o.o."
+        st.session_state.umowa_rodzaj = "Umowa o pracę (1/1 etatu)"
+        st.session_state.okres = "od 01.01.2023 r. do nadal"
+        st.session_state.stanowisko = "Pracownik biurowy"
+        
+        # Dane finansowe
         st.session_state.miesiac = "wrzesień 2026"
         st.session_state.przychod = 830.98
         st.session_state.koszty = 0.00
@@ -58,27 +67,35 @@ if uploaded_wniosek and uploaded_lista and not st.session_state.data_extracted:
         st.rerun()
 
 if st.session_state.data_extracted:
-    st.success("Dane zostały odczytane! Sprawdź je i w razie potrzeby popraw poniżej:")
+    st.success("Dane zostały odczytane! Zweryfikuj i uzupełnij pola formularza przed pobraniem PDF:")
     
     with st.form("edycja_form"):
-        st.subheader("1. Dane osobowe")
-        imie = st.text_input("Imię i nazwisko", value=st.session_state.imie)
-        adres = st.text_input("Adres zamieszkania", value=st.session_state.adres)
-        miesiac = st.text_input("Miesiąc i rok", value=st.session_state.miesiac)
+        st.subheader("1. Nagłówek dokumentu")
+        pracodawca = st.text_area("Pieczęć / Dane zakładu pracy (górny lewy róg)", value=st.session_state.pracodawca, height=80)
+        miejscowosc_data = st.text_input("Miejscowość i data (górny prawy róg)", value=st.session_state.miejscowosc_data)
         
-        st.subheader("2. Składniki wynagrodzenia (zł)")
-        przychod = st.number_input("1. Przychód (Brutto)", value=float(st.session_state.przychod), format="%.2f")
+        st.subheader("2. Dane pracownika i zatrudnienia")
+        imie = st.text_input("Pan/i (Imię i nazwisko)", value=st.session_state.imie)
+        adres = st.text_input("Zamieszkały(a) (Adres)", value=st.session_state.adres)
+        firma_zatrudniajaca = st.text_input("Jest zatrudniony(a) w", value=st.session_state.firma_zatrudniajaca)
+        umowa_rodzaj = st.text_input("Na podstawie (rodzaj umowy / wymiar)", value=st.session_state.umowa_rodzaj)
+        okres = st.text_input("W okresie", value=st.session_state.okres)
+        stanowisko = st.text_input("Na stanowisku", value=st.session_state.stanowisko)
+        
+        st.subheader("3. Wyliczenie dochodu za miesiąc")
+        miesiac = st.text_input("Za miesiąc", value=st.session_state.miesiac)
+        przychod = st.number_input("1. Przychód z tytułu wynagrodzenia (Brutto)", value=float(st.session_state.przychod), format="%.2f")
         koszty = st.number_input("2. Koszty uzyskania przychodu", value=float(st.session_state.koszty), format="%.2f")
-        podatek = st.number_input("3. Obciążenie podatkiem dochodowym", value=float(st.session_state.podatek), format="%.2f")
-        zdrowotna = st.number_input("4. Składka na ubezpieczenie zdrowotne", value=float(st.session_state.zdrowotna), format="%.2f")
-        spoleczne = st.number_input("5. Składki emerytalne i rentowe (pracownika)", value=float(st.session_state.spoleczne), format="%.2f")
-        chorobowa = st.number_input("6. Składka na ubezpieczenie chorobowe", value=float(st.session_state.chorobowa), format="%.2f")
+        podatek = st.number_input("3. Miesięczne obciążenie podatkiem dochodowym", value=float(st.session_state.podatek), format="%.2f")
+        zdrowotna = st.number_input("4. Kwota składki na ubezpieczenie zdrowotne", value=float(st.session_state.zdrowotna), format="%.2f")
+        spoleczne = st.number_input("5. Składki emerytalne i rentowe (część ubezpieczonego)", value=float(st.session_state.spoleczne), format="%.2f")
+        chorobowa = st.number_input("6. Kwota składki na ubezpieczenie chorobowe", value=float(st.session_state.chorobowa), format="%.2f")
         
         # Automatyczne obliczenie dochodu netto (pkt 7)
         suma_odliczen = koszty + podatek + zdrowotna + spoleczne + chorobowa
         dochod = przychod - suma_odliczen
         
-        st.info(f"**7. DOCHÓD NETTO (obliczony automatycznie):** {dochod:.2f} zł")
+        st.info(f"**7. DOCHÓD NETTO (obliczony automatycznie): {dochod:.2f} zł**")
         
         submitted = st.form_submit_button("Generuj PDF")
         
@@ -87,33 +104,63 @@ if st.session_state.data_extracted:
             c = canvas.Canvas(pdf_filename, pagesize=A4)
             width, height = A4
             
-            # Nagłówek
-            c.setFont(FONT_NAME, 13)
-            c.drawString(50, height - 50, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA")
-            c.setFont(FONT_NAME, 10)
-            c.drawString(50, height - 68, "DLA CELÓW POMOCY SPOŁECZNEJ (MOPS)")
-            
-            # Dane osobowe
-            c.drawString(50, height - 110, f"Pan/i: {imie}")
-            c.drawString(50, height - 130, f"Adres: {adres}")
-            c.drawString(50, height - 150, f"Za miesiąc: {miesiac}")
-            
-            # Punkty 1-6
-            c.drawString(50, height - 190, f"1. Przychód z tytułu wynagrodzenia: {przychod:.2f} zł")
-            c.drawString(50, height - 210, f"2. Koszty uzyskania przychodu: {koszty:.2f} zł")
-            c.drawString(50, height - 230, f"3. Miesięczne obciążenie podatkiem dochodowym: {podatek:.2f} zł")
-            c.drawString(50, height - 250, f"4. Kwota składki na ubezpieczenie zdrowotne: {zdrowotna:.2f} zł")
-            c.drawString(50, height - 270, f"5. Składki na ubezpieczenie emerytalne i rentowe: {spoleczne:.2f} zł")
-            c.drawString(50, height - 290, f"6. Kwota składki na ubezpieczenie chorobowe: {chorobowa:.2f} zł")
-            
-            # Punkt 7 - Dochód netto
-            c.setFont(FONT_NAME, 11)
-            c.drawString(50, height - 330, f"7. DOCHÓD NETTO: {dochod:.2f} zł")
-            
-            # Podpis
+            # --- NAGŁÓWEK ---
             c.setFont(FONT_NAME, 9)
-            c.drawString(50, height - 400, "...........................................................")
-            c.drawString(50, height - 415, "Pieczęć i podpis osoby upoważnionej")
+            y_stamp = height - 50
+            for line in pracodawca.split("\n"):
+                c.drawString(50, y_stamp, line)
+                y_stamp -= 12
+                
+            c.drawRightString(width - 50, height - 50, miejscowosc_data)
+            
+            # --- TYTUŁ DOKUMENTU ---
+            c.setFont(FONT_NAME, 12)
+            c.drawCentredString(width / 2, height - 120, "ZAŚWIADCZENIE")
+            c.setFont(FONT_NAME, 9.5)
+            c.drawCentredString(width / 2, height - 135, "o wysokości wynagrodzenia z tytułu zatrudnienia dla celów pomocy społecznej")
+            
+            # --- DANE OSOBOWE I ZATRUDNIENIA ---
+            y = height - 175
+            c.drawString(50, y, f"Zaświadcza się, że Pan/i:  {imie}")
+            y -= 20
+            c.drawString(50, y, f"zamieszkały(a):  {adres}")
+            y -= 20
+            c.drawString(50, y, f"jest zatrudniony(a) w:  {firma_zatrudniajaca}")
+            y -= 20
+            c.drawString(50, y, f"na podstawie:  {umowa_rodzaj}")
+            y -= 20
+            c.drawString(50, y, f"w okresie:  {okres}")
+            y -= 20
+            c.drawString(50, y, f"na stanowisku:  {stanowisko}")
+            
+            # --- TABELA WYLIECZEŃ ---
+            y -= 35
+            c.setFont(FONT_NAME, 10)
+            c.drawString(50, y, f"Dochód z tytułu zatrudnienia za miesiąc: {miesiac}")
+            
+            c.setFont(FONT_NAME, 9)
+            y -= 25
+            c.drawString(50, y, f"1. Przychód z tytułu wynagrodzenia za pracę: {przychod:.2f} zł")
+            y -= 20
+            c.drawString(50, y, f"2. Koszty uzyskania przychodu: {koszty:.2f} zł")
+            y -= 20
+            c.drawString(50, y, f"3. Miesięczne obciążenie podatkiem dochodowym od osób fizycznych: {podatek:.2f} zł")
+            y -= 20
+            c.drawString(50, y, f"4. Kwota składki na ubezpieczenie zdrowotne: {zdrowotna:.2f} zł")
+            y -= 20
+            c.drawString(50, y, f"5. Składki na ubezpieczenie emerytalne i rentowe (część pracownika): {spoleczne:.2f} zł")
+            y -= 20
+            c.drawString(50, y, f"6. Kwota składki na ubezpieczenie chorobowe: {chorobowa:.2f} zł")
+            
+            y -= 30
+            c.setFont(FONT_NAME, 10)
+            c.drawString(50, y, f"7. DOCHÓD NETTO (pkt 1 - (2+3+4+5+6)): {dochod:.2f} zł")
+            
+            # --- STOPKA / PODPIS ---
+            y -= 90
+            c.setFont(FONT_NAME, 9)
+            c.drawRightString(width - 50, y, "....................................................................")
+            c.drawRightString(width - 50, y - 15, "pieczęć i podpis osoby upoważnionej")
             
             c.save()
             st.session_state.pdf_generated = True
@@ -127,5 +174,3 @@ if st.session_state.data_extracted:
                     label="📥 Pobierz gotowy PDF",
                     data=file,
                     file_name="zaswiadczenie_wypelnione.pdf",
-                    mime="application/pdf"
-                )
