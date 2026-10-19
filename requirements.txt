@@ -1,6 +1,5 @@
 streamlit
-easyocr
-opencv-python-headless
+pytesseract
 numpy
 reportlab
 pillow
