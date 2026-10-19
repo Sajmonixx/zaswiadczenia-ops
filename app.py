@@ -11,7 +11,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 # Ustawienia strony Streamlit
-st.set_page_config(page_title="Generator Zaświadczeń OPS", page_icon="📄", layout="centered")
+st.set_page_config(page_title="Generator Zaświadczeń MOPS", page_icon="📄", layout="centered")
 
 # Pobranie darmowej czcionki Roboto dla poprawnej obsługi polskich znaków w PDF
 @st.cache_resource
@@ -37,7 +37,7 @@ def load_ocr():
 
 reader = load_ocr()
 
-st.title("📄 Generator Zaświadczenia dla OPS")
+st.title("📄 Generator Zaświadczenia dla MOPS")
 st.write("Wgraj zdjęcia wniosku oraz listy płac. System odczyta dane za pomocą OCR, a Ty będziesz mógł je sprawdzić i poprawić przed wygenerowaniem PDF.")
 
 # Sekcja wgrywania plików
@@ -96,7 +96,7 @@ if st.session_state.data_extracted:
         submitted = st.form_submit_button("Generuj i pobierz PDF")
         
         if submitted:
-            pdf_filename = "zaswiadczenie_ops.pdf"
+            pdf_filename = "zaswiadczenie_mops.pdf"
             c = canvas.Canvas(pdf_filename, pagesize=A4)
             width, height = A4
             
@@ -104,7 +104,7 @@ if st.session_state.data_extracted:
             c.setFont(FONT_NAME, 13)
             c.drawString(50, height - 50, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA")
             c.setFont(FONT_NAME, 10)
-            c.drawString(50, height - 68, "DLA CELÓW POMOCY SPOŁECZNEJ")
+            c.drawString(50, height - 68, "DLA CELÓW POMOCY SPOŁECZNEJ (MOPS)")
             
             # Dane osobowe
             c.drawString(50, height - 110, f"Pan/i: {imie}")
