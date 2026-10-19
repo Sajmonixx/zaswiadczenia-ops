@@ -169,8 +169,10 @@ if st.session_state.data_extracted:
     if st.session_state.pdf_generated:
         st.success("PDF został pomyślnie wygenerowany!")
         if os.path.exists("zaswiadczenie_mops.pdf"):
-            with open("zaswiadczenie_mops.pdf", "rb") as file:
+            with open("zaswiadczenie_mops.pdf", "rb") as pdf_file:
                 st.download_button(
                     label="📥 Pobierz gotowy PDF",
-                    data=file,
+                    data=pdf_file,
                     file_name="zaswiadczenie_wypelnione.pdf",
+                    mime="application/pdf"
+                )
