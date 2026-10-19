@@ -19,11 +19,10 @@ if os.path.exists("Roboto-Regular.ttf"):
     FONT_NAME = "Roboto"
 
 st.title("📄 Generator Zaświadczenia dla MOPS")
-st.write("Wgraj zdjęcia wniosku oraz listy płac. Uzupełnij lub popraw odczytane dane przed wygenerowaniem gotowego pliku PDF.")
+st.write("Wgraj zdjęcie lub skan listy płac. Uzupełnij dane pracownika oraz szczegóły zatrudnienia, a system automatycznie przeliczy dochód i wygeneruje zaświadczenie w PDF.")
 
-# Sekcja wgrywania plików
-uploaded_wniosek = st.file_uploader("1. Wgraj zdjęcie / skan Wniosku", type=["jpg", "jpeg", "png"])
-uploaded_lista = st.file_uploader("2. Wgraj zdjęcie / skan Listy Płac", type=["jpg", "jpeg", "png"])
+# Sekcja wgrywania wyłącznie listy płac
+uploaded_lista = st.file_uploader("Wgraj zdjęcie / skan Listy Płac", type=["jpg", "jpeg", "png"])
 
 if "data_extracted" not in st.session_state:
     st.session_state.data_extracted = False
@@ -31,22 +30,18 @@ if "data_extracted" not in st.session_state:
 if "pdf_generated" not in st.session_state:
     st.session_state.pdf_generated = False
 
-# Wstępne przypisanie pełnego zestawu pól
-if uploaded_wniosek and uploaded_lista and not st.session_state.data_extracted:
-    with st.spinner("Trwa odczytywanie danych ze zdjęć (OCR)... Proszę czekać..."):
+if uploaded_lista and not st.session_state.data_extracted:
+    with st.spinner("Trwa odczytywanie danych z listy płac (OCR)... Proszę czekać..."):
         try:
-            img_w = Image.open(uploaded_wniosek)
             img_l = Image.open(uploaded_lista)
-            text_w = pytesseract.image_to_string(img_w, lang='pol+eng')
             text_l = pytesseract.image_to_string(img_l, lang='pol+eng')
         except Exception:
             pass
         
-        # Dane nagłówkowe i firmy
+        # Domyślne wartości pól do edycji w formularzu
         st.session_state.pracodawca = "Pieczęć zakładu pracy"
         st.session_state.miejscowosc_data = "Ostrów Wielkopolski, 19.10.2026 r."
         
-        # Dane pracownika i umowy
         st.session_state.imie = "Eryka Furmanek"
         st.session_state.adres = "ul. Kościelna 9/10, 63-900 Ostrów Wlkp."
         st.session_state.firma_zatrudniajaca = ""
@@ -54,7 +49,6 @@ if uploaded_wniosek and uploaded_lista and not st.session_state.data_extracted:
         st.session_state.okres = ""
         st.session_state.stanowisko = ""
         
-        # Dane finansowe
         st.session_state.miesiac = "wrzesień 2026"
         st.session_state.przychod = 830.98
         st.session_state.koszty = 0.00
@@ -67,22 +61,24 @@ if uploaded_wniosek and uploaded_lista and not st.session_state.data_extracted:
         st.rerun()
 
 if st.session_state.data_extracted:
-    st.success("Dane zostały odczytane! Zweryfikuj i uzupełnij pola formularza przed pobraniem PDF:")
+    st.success("Dane z listy płac zostały załadowane! Uzupełnij poniższe pola przed wygenerowaniem PDF:")
     
     with st.form("edycja_form"):
-        st.subheader("1. Nagłówek dokumentu")
-        pracodawca = st.text_area("Pieczęć / Dane zakładu pracy (górny lewy róg)", value=st.session_state.pracodawca, height=80)
+        st.subheader("1. Nagłówek i data")
+        pracodawca = st.text_area("Pieczęć / Dane zakładu pracy (górny lewy róg)", value=st.session_state.pracodawca, height=70)
         miejscowosc_data = st.text_input("Miejscowość i data (górny prawy róg)", value=st.session_state.miejscowosc_data)
         
-        st.subheader("2. Dane pracownika i zatrudnienia")
+        st.subheader("2. Dane pracownika")
         imie = st.text_input("Pan/i (Imię i nazwisko)", value=st.session_state.imie)
         adres = st.text_input("Zamieszkały(a) (Adres)", value=st.session_state.adres)
-        firma_zatrudniajaca = st.text_input("Jest zatrudniony(a) w", value=st.session_state.firma_zatrudniajaca)
-        umowa_rodzaj = st.text_input("Na podstawie (rodzaj umowy / wymiar)", value=st.session_state.umowa_rodzaj)
-        okres = st.text_input("W okresie", value=st.session_state.okres)
-        stanowisko = st.text_input("Na stanowisku", value=st.session_state.stanowisko)
         
-        st.subheader("3. Wyliczenie dochodu za miesiąc")
+        st.subheader("3. Dane o zatrudnieniu")
+        firma_zatrudniajaca = st.text_input("Jest zatrudniony(a) w (nazwa i adres firmy)", value=st.session_state.firma_zatrudniajaca)
+        umowa_rodzaj = st.text_input("Na podstawie (np. umowa o pracę, 1/1 etatu)", value=st.session_state.umowa_rodzaj)
+        okres = st.text_input("W okresie (np. od 01.01.2023 r. do nadal)", value=st.session_state.okres)
+        stanowisko = st.text_input("Na stanowisku (np. Sprzedawca, Magazynier)", value=st.session_state.stanowisko)
+        
+        st.subheader("4. Składniki wynagrodzenia za miesiąc")
         miesiac = st.text_input("Za miesiąc", value=st.session_state.miesiac)
         przychod = st.number_input("1. Przychód z tytułu wynagrodzenia (Brutto)", value=float(st.session_state.przychod), format="%.2f")
         koszty = st.number_input("2. Koszty uzyskania przychodu", value=float(st.session_state.koszty), format="%.2f")
@@ -91,7 +87,7 @@ if st.session_state.data_extracted:
         spoleczne = st.number_input("5. Składki emerytalne i rentowe (część ubezpieczonego)", value=float(st.session_state.spoleczne), format="%.2f")
         chorobowa = st.number_input("6. Kwota składki na ubezpieczenie chorobowe", value=float(st.session_state.chorobowa), format="%.2f")
         
-        # Automatyczne obliczenie dochodu netto (pkt 7)
+        # Automatyczne przeliczenie dochodu netto
         suma_odliczen = koszty + podatek + zdrowotna + spoleczne + chorobowa
         dochod = przychod - suma_odliczen
         
