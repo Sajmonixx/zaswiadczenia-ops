@@ -17,7 +17,7 @@ st.set_page_config(page_title="Generator Zaświadczeń MOPS", page_icon="📄", 
 # ==============================================================================
 BAZA_PRACOWNIKOW = [
     {
-        "klucz_nazwisko": "Furmanek", # fraza do wykrycia przez OCR (małymi literami)
+        "klucz_nazwisko": "furmanek",
         "imie": "Eryka Furmanek",
         "adres": "ul. Kościelna 9/10, 63-900 Ostrów Wlkp.",
         "firma_zatrudniajaca": "ABC Sp. z o.o., ul. Główna 1, 63-900 Ostrów Wlkp.",
@@ -55,7 +55,7 @@ if os.path.exists("Roboto-Regular.ttf"):
     FONT_NAME = "Roboto"
 
 st.title("📄 Generator Zaświadczenia dla MOPS")
-st.write("Wgraj zdjęcie listy płac. System automatycznie rozpozna pracownika z bazy na podstawie nazwiska i przeliczy dochód netto.")
+st.write("Wgraj zdjęcie listy płac. System automatycznie rozpozna pracownika z bazy lub pozwoli wybrać go z listy rozwijanej.")
 
 # Sekcja wgrywania pliku
 uploaded_lista = st.file_uploader("Wgraj zdjęcie / skan Listy Płac", type=["jpg", "jpeg", "png"])
@@ -82,9 +82,10 @@ if uploaded_lista and not st.session_state.data_extracted:
                 dopasowany_pracownik = osoba
                 break
         
-        # Przypisanie danych po wykryciu lub wartości domyślnych
+        # Przypisanie wykrytej osoby lub ustawienie domyślne
         if dopasowany_pracownik:
             st.session_state.wykryto_osobe = True
+            st.session_state.wybrana_osoba_imie = dopasowany_pracownik["imie"]
             st.session_state.pracodawca = dopasowany_pracownik["pracodawca_pieczec"]
             st.session_state.imie = dopasowany_pracownik["imie"]
             st.session_state.adres = dopasowany_pracownik["adres"]
@@ -94,6 +95,7 @@ if uploaded_lista and not st.session_state.data_extracted:
             st.session_state.stanowisko = dopasowany_pracownik["stanowisko"]
         else:
             st.session_state.wykryto_osobe = False
+            st.session_state.wybrana_osoba_imie = "-- Wybierz ręcznie z bazy --"
             st.session_state.pracodawca = "Pieczęć zakładu pracy"
             st.session_state.imie = ""
             st.session_state.adres = ""
@@ -115,10 +117,40 @@ if uploaded_lista and not st.session_state.data_extracted:
         st.rerun()
 
 if st.session_state.data_extracted:
+    # --- LISTA ROZWIJANA DO WYBORU PRACOWNIKA Z BAZY ---
+    opcje_bazy = ["-- Wybierz ręcznie z bazy --"] + [p["imie"] for p in BAZA_PRACOWNIKOW]
+    
+    idx_domyslny = 0
+    if st.session_state.get("wybrana_osoba_imie") in opcje_bazy:
+        idx_domyslny = opcje_bazy.index(st.session_state.wybrana_osoba_imie)
+        
+    wybrany_z_listy = st.selectbox(
+        "👤 Wybierz lub zmień pracownika z bazy:",
+        opcje_bazy,
+        index=idx_domyslny
+    )
+    
+    # Reakcja na zmianę w wyborze z listy rozwijanej
+    if wybrany_z_listy != st.session_state.get("wybrana_osoba_imie"):
+        st.session_state.wybrana_osoba_imie = wybrany_z_listy
+        osoba_znaleziona = next((p for p in BAZA_PRACOWNIKOW if p["imie"] == wybrany_z_listy), None)
+        if osoba_znaleziona:
+            st.session_state.pracodawca = osoba_znaleziona["pracodawca_pieczec"]
+            st.session_state.imie = osoba_znaleziona["imie"]
+            st.session_state.adres = osoba_znaleziona["adres"]
+            st.session_state.firma_zatrudniajaca = osoba_znaleziona["firma_zatrudniajaca"]
+            st.session_state.umowa_rodzaj = osoba_znaleziona["umowa_rodzaj"]
+            st.session_state.okres = osoba_znaleziona["okres"]
+            st.session_state.stanowisko = osoba_znaleziona["stanowisko"]
+            st.session_state.wykryto_osobe = True
+        else:
+            st.session_state.wykryto_osobe = False
+        st.rerun()
+
     if st.session_state.wykryto_osobe:
-        st.success(f" Rozpoznano pracownika: **{st.session_state.imie}**!")
+        st.success(f"Załadowano dane dla: **{st.session_state.imie}**")
     else:
-        st.warning(" Nie rozpoznano nazwiska na zdjęciu listy płac. Możesz wybrać osobę z bazy lub wpisać dane ręcznie.")
+        st.info("Wpisz dane pracownika ręcznie w poniższym formularzu lub wybierz osobę z listy rozwijanej powyżej.")
 
     with st.form("edycja_form"):
         st.subheader("1. Nagłówek i data")
