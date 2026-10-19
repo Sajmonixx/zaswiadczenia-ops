@@ -12,6 +12,42 @@ from reportlab.pdfbase.ttfonts import TTFont
 # Ustawienia strony Streamlit
 st.set_page_config(page_title="Generator Zaświadczeń MOPS", page_icon="📄", layout="centered")
 
+# ==============================================================================
+# BAZA DANYCH PRACOWNIKÓW - Tutaj dodajesz kolejne osoby
+# ==============================================================================
+BAZA_PRACOWNIKOW = [
+    {
+        "klucz_nazwisko": "furmanek", # fraza do wykrycia przez OCR (małymi literami)
+        "imie": "Eryka Furmanek",
+        "adres": "ul. Kościelna 9/10, 63-900 Ostrów Wlkp.",
+        "firma_zatrudniajaca": "ABC Sp. z o.o., ul. Główna 1, 63-900 Ostrów Wlkp.",
+        "umowa_rodzaj": "Umowa o pracę (1/1 etatu)",
+        "okres": "od 01.01.2023 r. do nadal",
+        "stanowisko": "Pracownik biurowy",
+        "pracodawca_pieczec": "Pieczęć zakładu pracy"
+    },
+    {
+        "klucz_nazwisko": "kowalski",
+        "imie": "Jan Kowalski",
+        "adres": "ul. Słoneczna 15, 63-900 Ostrów Wlkp.",
+        "firma_zatrudniajaca": "XYZ Sp. z o.o., ul. Parkowa 5, 63-900 Ostrów Wlkp.",
+        "umowa_rodzaj": "Umowa zlecenie",
+        "okres": "od 01.05.2024 r. do 31.12.2026 r.",
+        "stanowisko": "Magazynier",
+        "pracodawca_pieczec": "Pieczęć zakładu pracy"
+    },
+    {
+        "klucz_nazwisko": "nowak",
+        "imie": "Anna Nowak",
+        "adres": "ul. Długa 4/2, 63-900 Ostrów Wlkp.",
+        "firma_zatrudniajaca": "ABC Sp. z o.o., ul. Główna 1, 63-900 Ostrów Wlkp.",
+        "umowa_rodzaj": "Umowa o pracę (1/2 etatu)",
+        "okres": "od 15.02.2022 r. do nadal",
+        "stanowisko": "Sprzedawca",
+        "pracodawca_pieczec": "Pieczęć zakładu pracy"
+    }
+]
+
 # Rejestracja czcionki z obsługą polskich znaków
 FONT_NAME = "Helvetica"
 if os.path.exists("Roboto-Regular.ttf"):
@@ -19,9 +55,9 @@ if os.path.exists("Roboto-Regular.ttf"):
     FONT_NAME = "Roboto"
 
 st.title("📄 Generator Zaświadczenia dla MOPS")
-st.write("Wgraj zdjęcie lub skan listy płac. Uzupełnij dane pracownika oraz szczegóły zatrudnienia, a system automatycznie przeliczy dochód i wygeneruje zaświadczenie w PDF.")
+st.write("Wgraj zdjęcie listy płac. System automatycznie rozpozna pracownika z bazy na podstawie nazwiska i przeliczy dochód netto.")
 
-# Sekcja wgrywania wyłącznie listy płac
+# Sekcja wgrywania pliku
 uploaded_lista = st.file_uploader("Wgraj zdjęcie / skan Listy Płac", type=["jpg", "jpeg", "png"])
 
 if "data_extracted" not in st.session_state:
@@ -32,23 +68,41 @@ if "pdf_generated" not in st.session_state:
 
 if uploaded_lista and not st.session_state.data_extracted:
     with st.spinner("Trwa odczytywanie danych z listy płac (OCR)... Proszę czekać..."):
+        ocr_text = ""
         try:
             img_l = Image.open(uploaded_lista)
-            text_l = pytesseract.image_to_string(img_l, lang='pol+eng')
+            ocr_text = pytesseract.image_to_string(img_l, lang='pol+eng').lower()
         except Exception:
             pass
         
-        # Domyślne wartości pól do edycji w formularzu
-        st.session_state.pracodawca = "Pieczęć zakładu pracy"
+        # Szukanie dopasowania w bazie po nazwisku
+        dopasowany_pracownik = None
+        for osoba in BAZA_PRACOWNIKOW:
+            if osoba["klucz_nazwisko"].lower() in ocr_text:
+                dopasowany_pracownik = osoba
+                break
+        
+        # Przypisanie danych po wykryciu lub wartości domyślnych
+        if dopasowany_pracownik:
+            st.session_state.wykryto_osobe = True
+            st.session_state.pracodawca = dopasowany_pracownik["pracodawca_pieczec"]
+            st.session_state.imie = dopasowany_pracownik["imie"]
+            st.session_state.adres = dopasowany_pracownik["adres"]
+            st.session_state.firma_zatrudniajaca = dopasowany_pracownik["firma_zatrudniajaca"]
+            st.session_state.umowa_rodzaj = dopasowany_pracownik["umowa_rodzaj"]
+            st.session_state.okres = dopasowany_pracownik["okres"]
+            st.session_state.stanowisko = dopasowany_pracownik["stanowisko"]
+        else:
+            st.session_state.wykryto_osobe = False
+            st.session_state.pracodawca = "Pieczęć zakładu pracy"
+            st.session_state.imie = ""
+            st.session_state.adres = ""
+            st.session_state.firma_zatrudniajaca = ""
+            st.session_state.umowa_rodzaj = ""
+            st.session_state.okres = ""
+            st.session_state.stanowisko = ""
+
         st.session_state.miejscowosc_data = "Ostrów Wielkopolski, 19.10.2026 r."
-        
-        st.session_state.imie = "Eryka Furmanek"
-        st.session_state.adres = "ul. Kościelna 9/10, 63-900 Ostrów Wlkp."
-        st.session_state.firma_zatrudniajaca = ""
-        st.session_state.umowa_rodzaj = ""
-        st.session_state.okres = ""
-        st.session_state.stanowisko = ""
-        
         st.session_state.miesiac = "wrzesień 2026"
         st.session_state.przychod = 830.98
         st.session_state.koszty = 0.00
@@ -61,8 +115,11 @@ if uploaded_lista and not st.session_state.data_extracted:
         st.rerun()
 
 if st.session_state.data_extracted:
-    st.success("Dane z listy płac zostały załadowane! Uzupełnij poniższe pola przed wygenerowaniem PDF:")
-    
+    if st.session_state.wykryto_osobe:
+        st.success(f" Rozpoznano pracownika: **{st.session_state.imie}**!")
+    else:
+        st.warning(" Nie rozpoznano nazwiska na zdjęciu listy płac. Możesz wybrać osobę z bazy lub wpisać dane ręcznie.")
+
     with st.form("edycja_form"):
         st.subheader("1. Nagłówek i data")
         pracodawca = st.text_area("Pieczęć / Dane zakładu pracy (górny lewy róg)", value=st.session_state.pracodawca, height=70)
@@ -161,7 +218,6 @@ if st.session_state.data_extracted:
             c.save()
             st.session_state.pdf_generated = True
 
-    # Przycisk pobierania umieszczony POZA formularzem
     if st.session_state.pdf_generated:
         st.success("PDF został pomyślnie wygenerowany!")
         if os.path.exists("zaswiadczenie_mops.pdf"):
