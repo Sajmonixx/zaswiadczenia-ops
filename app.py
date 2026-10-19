@@ -116,32 +116,37 @@ def odczytaj_tekst_z_pliku(uploaded_file):
     return extracted_text.lower()
 
 def wykryj_miesiac(text):
+    # Całkowite usunięcie słowa "stycznia" z analizy (używanego m.in. w nazwie ulicy)
+    text_clean = re.sub(r'stycznia', '', text, flags=re.IGNORECASE)
+
+    # Słownik miesięcy – klucz "styczeń" wymaga pełnej słowa, by nie opierać się na wycinkach
     miesiace_dict = {
-        "stycz": "styczeń", "lut": "luty", "marc": "marzec", "kwiet": "kwiecień",
-        "maj": "maj", "czerw": "czerwiec", "lipc": "lipiec", "sierp": "sierpień",
         "wrze": "wrzesień", "paźd": "październik", "pazd": "październik",
-        "list": "listopad", "grud": "grudzień"
+        "list": "listopad", "grud": "grudzień", "lut": "luty",
+        "marc": "marzec", "kwiet": "kwiecień", "maj": "maj",
+        "czerw": "czerwiec", "lipc": "lipiec", "sierp": "sierpień",
+        "styczeń": "styczeń", "styczen": "styczeń"
     }
+    
     rok_match = re.search(r'202[0-9]', text)
     rok = rok_match.group(0) if rok_match else "2026"
     
     for klucz, nazwa in miesiace_dict.items():
-        if klucz in text:
+        if klucz in text_clean:
             return f"{nazwa} {rok}"
     return f"wrzesień {rok}"
 
 st.title("📄 Generator Zaświadczenia dla MOPS")
-st.write("Wgraj plik listy płac (JPG, PNG lub PDF). System rozpozna pracownika z bazy i przeliczy dochód netto.")
+st.write("Wgraj plik listy płac (zdjęcie JPG/PNG lub dokument PDF). System rozpozna pracownika z bazy i przeliczy dochód netto.")
 
-# Sekcja wgrywania pliku (jawnie dozwolone pliki PDF)
 uploaded_lista = st.file_uploader("Wgraj plik Listy Płac (Zdjęcie lub PDF)", type=["jpg", "jpeg", "png", "pdf"])
 
-# Przetwarzanie nowo wgranego pliku
 if uploaded_lista is not None and st.session_state.last_uploaded_file != uploaded_lista.name:
     with st.spinner("Trwa analiza pliku i odczytywanie danych... Proszę czekać..."):
         st.session_state.last_uploaded_file = uploaded_lista.name
         ocr_text = odczytaj_tekst_z_pliku(uploaded_lista)
         
+        # Prawidłowe wykrycie miesiąca bez wpływu nazwy ulicy
         st.session_state.miesiac = wykryj_miesiac(ocr_text)
         
         dopasowany_pracownik = None
@@ -164,7 +169,6 @@ if uploaded_lista is not None and st.session_state.last_uploaded_file != uploade
             st.session_state.wykryto_osobe = False
             st.session_state.wybrana_osoba_imie = "-- Wybierz ręcznie z bazy --"
 
-# Lista rozwijana do ręcznego wyboru
 opcje_bazy = ["-- Wybierz ręcznie z bazy --"] + [p["imie"] for p in BAZA_PRACOWNIKOW]
 idx_domyslny = 0
 if st.session_state.wybrana_osoba_imie in opcje_bazy:
@@ -197,7 +201,6 @@ if st.session_state.wykryto_osobe:
 else:
     st.info("Wpisz dane pracownika ręcznie w poniższym formularzu lub wybierz osobę z listy rozwijanej powyżej.")
 
-# Formularz edycji
 with st.form("edycja_form"):
     st.subheader("1. Nagłówek i data")
     pracodawca = st.text_area("Pieczęć / Dane zakładu pracy (górny lewy róg)", value=st.session_state.pracodawca, height=70)
