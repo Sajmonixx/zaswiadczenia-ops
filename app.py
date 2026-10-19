@@ -3,6 +3,8 @@ import numpy as np
 from PIL import Image
 import streamlit as st
 import pytesseract
+import pypdf
+from pdf2image import convert_from_bytes
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -54,11 +56,43 @@ if os.path.exists("Roboto-Regular.ttf"):
     pdfmetrics.registerFont(TTFont("Roboto", "Roboto-Regular.ttf"))
     FONT_NAME = "Roboto"
 
-st.title("📄 Generator Zaświadczenia dla MOPS")
-st.write("Wgraj zdjęcie listy płac. System automatycznie rozpozna pracownika z bazy lub pozwoli wybrać go z listy rozwijanej.")
+def odczytaj_tekst_z_pliku(uploaded_file):
+    filename = uploaded_file.name.lower()
+    extracted_text = ""
+    
+    if filename.endswith(".pdf"):
+        # 1. Odczyt bezpośredni tekstu z pliku PDF (jeśli plik jest cyfrowy)
+        try:
+            reader = pypdf.PdfReader(uploaded_file)
+            for page in reader.pages:
+                extracted_text += page.extract_text() or ""
+        except Exception:
+            pass
+            
+        # 2. Jeśli plik to skan PDF (brak tekstu), konwertuj pierwszą stronę na obraz i uruchom OCR
+        if not extracted_text.strip():
+            try:
+                uploaded_file.seek(0)
+                images = convert_from_bytes(uploaded_file.read(), first_page=1, last_page=1)
+                if images:
+                    extracted_text = pytesseract.image_to_string(images[0], lang='pol+eng')
+            except Exception:
+                pass
+    else:
+        # Odczyt dla plików graficznych (JPG, PNG)
+        try:
+            img = Image.open(uploaded_file)
+            extracted_text = pytesseract.image_to_string(img, lang='pol+eng')
+        except Exception:
+            pass
+            
+    return extracted_text.lower()
 
-# Sekcja wgrywania pliku
-uploaded_lista = st.file_uploader("Wgraj zdjęcie / skan Listy Płac", type=["jpg", "jpeg", "png"])
+st.title("📄 Generator Zaświadczenia dla MOPS")
+st.write("Wgraj plik listy płac (zdjęcie JPG/PNG lub dokument PDF). System rozpozna pracownika z bazy i przeliczy dochód netto.")
+
+# Sekcja wgrywania pliku (obsługa JPG, PNG oraz PDF)
+uploaded_lista = st.file_uploader("Wgraj plik Listy Płac (Zdjęcie lub PDF)", type=["jpg", "jpeg", "png", "pdf"])
 
 if "data_extracted" not in st.session_state:
     st.session_state.data_extracted = False
@@ -67,13 +101,8 @@ if "pdf_generated" not in st.session_state:
     st.session_state.pdf_generated = False
 
 if uploaded_lista and not st.session_state.data_extracted:
-    with st.spinner("Trwa odczytywanie danych z listy płac (OCR)... Proszę czekać..."):
-        ocr_text = ""
-        try:
-            img_l = Image.open(uploaded_lista)
-            ocr_text = pytesseract.image_to_string(img_l, lang='pol+eng').lower()
-        except Exception:
-            pass
+    with st.spinner("Trwa analiza pliku i odczytywanie danych... Proszę czekać..."):
+        ocr_text = odczytaj_tekst_z_pliku(uploaded_lista)
         
         # Szukanie dopasowania w bazie po nazwisku
         dopasowany_pracownik = None
