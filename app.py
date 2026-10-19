@@ -15,53 +15,53 @@ from reportlab.pdfbase.ttfonts import TTFont
 st.set_page_config(page_title="Generator Zaświadczeń MOPS", page_icon="📄", layout="centered")
 
 # ==============================================================================
-# BAZA DANYCH PRACOWNIKÓW - Tutaj dodajesz kolejne osoby
+# BAZA DANYCH PRACOWNIKÓW - Zaktualizowane dane zatrudnienia
 # ==============================================================================
 BAZA_PRACOWNIKOW = [
     {
         "klucz_nazwisko": "furmanek",
         "imie": "Eryka Furmanek",
         "adres": "ul. Kościelna 9/10, 63-900 Ostrów Wlkp.",
-        "firma_zatrudniajaca": "ABC Sp. z o.o., ul. Główna 1, 63-900 Ostrów Wlkp.",
-        "umowa_rodzaj": "Umowa o pracę (1/1 etatu)",
-        "okres": "od 01.01.2023 r. do nadal",
-        "stanowisko": "Pracownik biurowy",
+        "firma_zatrudniajaca": "Foto Szymon Ostrowski, Plac 23 Stycznia 18, 63-400 Ostrów Wielkopolski",
+        "umowa_rodzaj": "Umowa o pracę na czas nieokreślony",
+        "okres": "od 01.09.2025 r. do 31.08.2028",
+        "stanowisko": "Fotograf",
         "pracodawca_pieczec": "Pieczęć zakładu pracy"
     },
     {
         "klucz_nazwisko": "kowalski",
         "imie": "Jan Kowalski",
         "adres": "ul. Słoneczna 15, 63-900 Ostrów Wlkp.",
-        "firma_zatrudniajaca": "XYZ Sp. z o.o., ul. Parkowa 5, 63-900 Ostrów Wlkp.",
-        "umowa_rodzaj": "Umowa zlecenie",
-        "okres": "od 01.05.2024 r. do 31.12.2026 r.",
-        "stanowisko": "Magazynier",
+        "firma_zatrudniajaca": "Foto Szymon Ostrowski, Plac 23 Stycznia 18, 63-400 Ostrów Wielkopolski",
+        "umowa_rodzaj": "Umowa o pracę na czas nieokreślony",
+        "okres": "od 01.09.2025 r. do 31.08.2028",
+        "stanowisko": "Fotograf",
         "pracodawca_pieczec": "Pieczęć zakładu pracy"
     },
     {
         "klucz_nazwisko": "nowak",
         "imie": "Anna Nowak",
         "adres": "ul. Długa 4/2, 63-900 Ostrów Wlkp.",
-        "firma_zatrudniajaca": "ABC Sp. z o.o., ul. Główna 1, 63-900 Ostrów Wlkp.",
-        "umowa_rodzaj": "Umowa o pracę (1/2 etatu)",
-        "okres": "od 15.02.2022 r. do nadal",
-        "stanowisko": "Sprzedawca",
+        "firma_zatrudniajaca": "Foto Szymon Ostrowski, Plac 23 Stycznia 18, 63-400 Ostrów Wielkopolski",
+        "umowa_rodzaj": "Umowa o pracę na czas nieokreślony",
+        "okres": "od 01.09.2025 r. do 31.08.2028",
+        "stanowisko": "Fotograf",
         "pracodawca_pieczec": "Pieczęć zakładu pracy"
     }
 ]
 
 # ==============================================================================
-# INICJALIZACJA DOMYŚLNYCH ZMIENNYCH SESJI (ZAPOBIEGA BŁĘDOM NameError)
+# INICJALIZACJA DOMYŚLNYCH ZMIENNYCH SESJI
 # ==============================================================================
 defaults = {
     "pracodawca": "Pieczęć zakładu pracy",
     "miejscowosc_data": "Ostrów Wielkopolski, 19.10.2026 r.",
     "imie": "",
     "adres": "",
-    "firma_zatrudniajaca": "",
-    "umowa_rodzaj": "",
-    "okres": "",
-    "stanowisko": "",
+    "firma_zatrudniajaca": "Foto Szymon Ostrowski, Plac 23 Stycznia 18, 63-400 Ostrów Wielkopolski",
+    "umowa_rodzaj": "Umowa o pracę na czas nieokreślony",
+    "okres": "od 01.09.2025 r. do 31.08.2028",
+    "stanowisko": "Fotograf",
     "miesiac": "wrzesień 2026",
     "przychod": 830.98,
     "koszty": 0.00,
@@ -179,7 +179,7 @@ if st.session_state.wykryto_osobe:
 else:
     st.info("Wpisz dane pracownika ręcznie w poniższym formularzu lub wybierz osobę z listy rozwijanej powyżej.")
 
-# Formularz
+# Formularz edycji
 with st.form("edycja_form"):
     st.subheader("1. Nagłówek i data")
     pracodawca = st.text_area("Pieczęć / Dane zakładu pracy (górny lewy róg)", value=st.session_state.pracodawca, height=70)
@@ -217,69 +217,4 @@ with st.form("edycja_form"):
         width, height = A4
         
         # --- NAGŁÓWEK ---
-        c.setFont(FONT_NAME, 9)
-        y_stamp = height - 50
-        for line in pracodawca.split("\n"):
-            c.drawString(50, y_stamp, line)
-            y_stamp -= 12
-            
-        c.drawRightString(width - 50, height - 50, miejscowosc_data)
-        
-        # --- TYTUŁ DOKUMENTU ---
-        c.setFont(FONT_NAME, 9.5)
-        c.drawCentredString(width / 2, height - 115, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA Z TYTUŁU ZATRUDNIENIA DLA CELÓW POMOCY SPOŁECZNEJ")
-        
-        # --- DANE OSOBOWE I ZATRUDNIENIA ---
-        y = height - 150
-        c.drawString(50, y, "Zaświadcza się, że Pan/i:")
-        y -= 15
-        c.drawString(70, y, f"{imie}")
-        y -= 20
-        c.drawString(50, y, "zamieszkały(a):")
-        y -= 15
-        c.drawString(70, y, f"{adres}")
-        y -= 20
-        c.drawString(50, y, f"jest zatrudniony(a) w:  {firma_zatrudniajaca}")
-        y -= 20
-        c.drawString(50, y, f"na podstawie: {umowa_rodzaj}    w okresie: {okres}")
-        y -= 20
-        c.drawString(50, y, f"na stanowisku:  {stanowisko}")
-        
-        # --- TABELA WYLIECZEŃ ---
-        y -= 30
-        c.setFont(FONT_NAME, 9)
-        c.drawString(50, y, f"1. Przychód z tytułu wynagrodzenia za pracę w miesiącu {miesiac}: {przychod:.2f} zł")
-        y -= 20
-        c.drawString(50, y, f"2. Koszty uzyskania przychodu: {koszty:.2f} zł")
-        y -= 20
-        c.drawString(50, y, f"3. Miesięczne obciążenie podatkiem dochodowym od osób fizycznych: {podatek:.2f} zł")
-        y -= 20
-        c.drawString(50, y, f"4. Kwota składki na ubezpieczenie zdrowotne: {zdrowotna:.2f} zł")
-        y -= 20
-        c.drawString(50, y, f"5. Składki na ubezpieczenie emerytalne i rentowe (część pracownika): {spoleczne:.2f} zł")
-        y -= 20
-        c.drawString(50, y, f"6. Kwota składki na ubezpieczenie chorobowe: {chorobowa:.2f} zł")
-        
-        y -= 30
-        c.setFont(FONT_NAME, 10)
-        c.drawString(50, y, f"7. DOCHÓD = 1 - (2+3+4+5+6): {dochod:.2f} zł")
-        
-        # --- STOPKA / PODPIS ---
-        y -= 90
-        c.setFont(FONT_NAME, 9)
-        c.drawRightString(width - 50, y, "....................................................................")
-        c.drawRightString(width - 50, y - 15, "pieczęć i podpis osoby upoważnionej")
-        
-        c.save()
-        st.session_state.pdf_generated = True
-
-if st.session_state.pdf_generated:
-    st.success("PDF został pomyślnie wygenerowany!")
-    if os.path.exists("zaswiadczenie_mops.pdf"):
-        with open("zaswiadczenie_mops.pdf", "rb") as pdf_file:
-            st.download_button(
-                label="📥 Pobierz gotowy PDF",
-                data=pdf_file,
-                file_name="zaswiadczenie_wypelnione.pdf",
-                mime="application/pdf"
-            )
+        c.setFont(FONT_NAME,
