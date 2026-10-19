@@ -1,4 +1,5 @@
 import os
+import urllib.request
 import numpy as np
 from PIL import Image
 import streamlit as st
@@ -6,9 +7,28 @@ import pytesseract
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 # Ustawienia strony Streamlit
 st.set_page_config(page_title="Generator Zaświadczeń MOPS", page_icon="📄", layout="centered")
+
+# Pobranie i rejestracja darmowej czcionki Roboto dla polskich znaków
+@st.cache_resource
+def setup_fonts():
+    font_path = "Roboto-Regular.ttf"
+    if not os.path.exists(font_path):
+        url = "https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Regular.ttf"
+        try:
+            urllib.request.urlretrieve(url, font_path)
+        except Exception:
+            pass
+    if os.path.exists(font_path):
+        pdfmetrics.registerFont(TTFont("Roboto", font_path))
+        return "Roboto"
+    return "Helvetica"
+
+FONT_NAME = setup_fonts()
 
 st.title("📄 Generator Zaświadczenia dla MOPS")
 st.write("Wgraj zdjęcia wniosku oraz listy płac. System odczyta dane za pomocą OCR, a Ty będziesz mógł je sprawdzić i poprawić przed wygenerowaniem PDF.")
@@ -80,9 +100,9 @@ if st.session_state.data_extracted:
             width, height = A4
             
             # Nagłówek
-            c.setFont("Helvetica-Bold", 13)
+            c.setFont(FONT_NAME, 13)
             c.drawString(50, height - 50, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA")
-            c.setFont("Helvetica", 10)
+            c.setFont(FONT_NAME, 10)
             c.drawString(50, height - 68, "DLA CELÓW POMOCY SPOŁECZNEJ (MOPS)")
             
             # Dane osobowe
@@ -99,11 +119,11 @@ if st.session_state.data_extracted:
             c.drawString(50, height - 290, f"6. Kwota składki na ubezpieczenie chorobowe: {chorobowa:.2f} zł")
             
             # Punkt 7 - Dochód netto
-            c.setFont("Helvetica-Bold", 11)
+            c.setFont(FONT_NAME, 11)
             c.drawString(50, height - 330, f"7. DOCHÓD NETTO: {dochod:.2f} zł")
             
             # Podpis
-            c.setFont("Helvetica", 9)
+            c.setFont(FONT_NAME, 9)
             c.drawString(50, height - 400, "...........................................................")
             c.drawString(50, height - 415, "Pieczęć i podpis osoby upoważnionej")
             
