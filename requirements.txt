@@ -3,3 +3,5 @@ pytesseract
 numpy
 reportlab
 pillow
+pdf2image
+pypdf
