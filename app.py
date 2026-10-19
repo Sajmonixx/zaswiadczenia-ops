@@ -1,5 +1,4 @@
 import os
-import urllib.request
 import numpy as np
 from PIL import Image
 import streamlit as st
@@ -13,25 +12,11 @@ from reportlab.pdfbase.ttfonts import TTFont
 # Ustawienia strony Streamlit
 st.set_page_config(page_title="Generator Zaświadczeń MOPS", page_icon="📄", layout="centered")
 
-# Pobranie i rejestracja czcionki z obsługą polskich znaków
-@st.cache_resource
-def setup_fonts():
-    font_path = "Roboto-Regular.ttf"
-    if not os.path.exists(font_path):
-        url = "https://raw.githubusercontent.com/google/fonts/main/ofl/roboto/static/Roboto-Regular.ttf"
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        try:
-            with urllib.request.urlopen(req) as response, open(font_path, 'wb') as out_file:
-                out_file.write(response.read())
-        except Exception as e:
-            pass
-    
-    if os.path.exists(font_path):
-        pdfmetrics.registerFont(TTFont("Roboto", font_path))
-        return "Roboto"
-    return "Helvetica"
-
-FONT_NAME = setup_fonts()
+# Rejestracja lokalnej czcionki Roboto z obsługą polskich znaków
+FONT_NAME = "Helvetica"
+if os.path.exists("Roboto-Regular.ttf"):
+    pdfmetrics.registerFont(TTFont("Roboto", "Roboto-Regular.ttf"))
+    FONT_NAME = "Roboto"
 
 st.title("📄 Generator Zaświadczenia dla MOPS")
 st.write("Wgraj zdjęcia wniosku oraz listy płac. System odczyta dane za pomocą OCR, a Ty będziesz mógł je sprawdzić i poprawić przed wygenerowaniem PDF.")
