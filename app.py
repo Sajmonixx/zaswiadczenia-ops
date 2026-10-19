@@ -71,7 +71,6 @@ defaults = {
     "spoleczne": 93.56,
     "chorobowa": 20.36,
     "wykryto_osobe": False,
-    "wybrana_osoba_imie": "-- Wybierz ręcznie z bazy --",
     "pdf_generated": False,
     "last_uploaded_file": None
 }
@@ -135,7 +134,7 @@ def wykryj_miesiac(text):
     return f"wrzesień {rok}"
 
 st.title("📄 Generator Zaświadczenia dla MOPS")
-st.write("Wgraj plik listy płac (zdjęcie JPG/PNG lub dokument PDF) lub wybierz osobę z bazy, aby otworzyć formularz.")
+st.write("Wgraj plik listy płac (zdjęcie JPG/PNG lub dokument PDF). System automatycznie rozpozna pracownika z bazy i przygotuje formularz.")
 
 uploaded_lista = st.file_uploader("Wgraj plik Listy Płac (Zdjęcie lub PDF)", type=["jpg", "jpeg", "png", "pdf"])
 
@@ -154,7 +153,6 @@ if uploaded_lista is not None and st.session_state.last_uploaded_file != uploade
         
         if dopasowany_pracownik:
             st.session_state.wykryto_osobe = True
-            st.session_state.wybrana_osoba_imie = dopasowany_pracownik["imie"]
             st.session_state.pracodawca = dopasowany_pracownik["pracodawca_pieczec"]
             st.session_state.imie = dopasowany_pracownik["imie"]
             st.session_state.adres = dopasowany_pracownik["adres"]
@@ -164,43 +162,14 @@ if uploaded_lista is not None and st.session_state.last_uploaded_file != uploade
             st.session_state.stanowisko = dopasowany_pracownik["stanowisko"]
         else:
             st.session_state.wykryto_osobe = False
-            st.session_state.wybrana_osoba_imie = "-- Wybierz ręcznie z bazy --"
+            st.session_state.imie = ""
+            st.session_state.adres = ""
 
-opcje_bazy = ["-- Wybierz ręcznie z bazy --"] + [p["imie"] for p in BAZA_PRACOWNIKOW]
-idx_domyslny = 0
-if st.session_state.wybrana_osoba_imie in opcje_bazy:
-    idx_domyslny = opcje_bazy.index(st.session_state.wybrana_osoba_imie)
-
-wybrany_z_listy = st.selectbox(
-    "👤 Wybierz lub zmień pracownika z bazy:",
-    opcje_bazy,
-    index=idx_domyslny
-)
-
-if wybrany_z_listy != st.session_state.wybrana_osoba_imie:
-    st.session_state.wybrana_osoba_imie = wybrany_z_listy
-    osoba_znaleziona = next((p for p in BAZA_PRACOWNIKOW if p["imie"] == wybrany_z_listy), None)
-    if osoba_znaleziona:
-        st.session_state.pracodawca = osoba_znaleziona["pracodawca_pieczec"]
-        st.session_state.imie = osoba_znaleziona["imie"]
-        st.session_state.adres = osoba_znaleziona["adres"]
-        st.session_state.firma_zatrudniajaca = osoba_znaleziona["firma_zatrudniajaca"]
-        st.session_state.umowa_rodzaj = osoba_znaleziona["umowa_rodzaj"]
-        st.session_state.okres = osoba_znaleziona["okres"]
-        st.session_state.stanowisko = osoba_znaleziona["stanowisko"]
-        st.session_state.wykryto_osobe = True
-    else:
-        st.session_state.wykryto_osobe = False
-    st.rerun()
-
-# --- WARUNEK WYŚWIETLANIA FORMULARZA ---
-pokaz_formularz = (uploaded_lista is not None) or (wybrany_z_listy != "-- Wybierz ręcznie z bazy --")
-
-if pokaz_formularz:
+if uploaded_lista is not None:
     if st.session_state.wykryto_osobe:
-        st.success(f"Załadowano dane dla: **{st.session_state.imie}**")
+        st.success(f"Rozpoznano pracownika: **{st.session_state.imie}**!")
     else:
-        st.info("Wpisz dane pracownika ręcznie w poniższym formularzu lub wybierz osobę z listy rozwijanej powyżej.")
+        st.warning("Nie rozpoznano nazwiska na wgranym pliku. Uzupełnij dane pracownika ręcznie w poniższym formularzu.")
 
     with st.form("edycja_form"):
         st.subheader("1. Nagłówek i data")
@@ -308,4 +277,4 @@ if pokaz_formularz:
                     mime="application/pdf"
                 )
 else:
-    st.info("💡 Wgraj plik z listą płac powyżej lub wybierz pracownika z bazy, aby wyświetlić formularz i wygenerować zaświadczenie.")
+    st.info("💡 Wgraj plik z listą płac (zdjęcie JPG/PNG lub plik PDF) powyżej, aby automatycznie odczytać dane i wygenerować zaświadczenie.")
