@@ -43,16 +43,16 @@ if uploaded_wniosek and uploaded_lista and not st.session_state.data_extracted:
             pass
         
         # Dane nagłówkowe i firmy
-        st.session_state.pracodawca = "ABC Sp. z o.o.\nul. Główna 1, 63-900 Ostrów Wlkp.\nNIP: 1234567890 REGON: 123456789"
+        st.session_state.pracodawca = "Pieczęć zakładu pracy"
         st.session_state.miejscowosc_data = "Ostrów Wielkopolski, 19.10.2026 r."
         
         # Dane pracownika i umowy
         st.session_state.imie = "Eryka Furmanek"
         st.session_state.adres = "ul. Kościelna 9/10, 63-900 Ostrów Wlkp."
-        st.session_state.firma_zatrudniajaca = "ABC Sp. z o.o."
-        st.session_state.umowa_rodzaj = "Umowa o pracę (1/1 etatu)"
-        st.session_state.okres = "od 01.01.2023 r. do nadal"
-        st.session_state.stanowisko = "Pracownik biurowy"
+        st.session_state.firma_zatrudniajaca = ""
+        st.session_state.umowa_rodzaj = ""
+        st.session_state.okres = ""
+        st.session_state.stanowisko = ""
         
         # Dane finansowe
         st.session_state.miesiac = "wrzesień 2026"
