@@ -21,11 +21,11 @@ BAZA_PRACOWNIKOW = [
     {
         "klucz_nazwisko": "furmanek",
         "imie": "Eryka Furmanek",
-        "adres": "ul. Kościelna 9/10, 63-900 Ostrów Wlkp.",
-        "firma_zatrudniajaca": "ABC Sp. z o.o., ul. Główna 1, 63-900 Ostrów Wlkp.",
-        "umowa_rodzaj": "Umowa o pracę (1/1 etatu)",
-        "okres": "od 01.01.2023 r. do nadal",
-        "stanowisko": "Pracownik biurowy",
+        "adres": "ul. Kościelna 9/10, 63-400 Ostrów Wlkp.",
+        "firma_zatrudniajaca": "Foto Szymon Ostrowski, Plac 23 Stycznia 18, 63-400 Ostrów Wlkp.",
+        "umowa_rodzaj": "Umowa o pracę na czas nieokreślony",
+        "okres": "od 01.09.2025 r. do 31.08.2028",
+        "stanowisko": "Fotograf",
         "pracodawca_pieczec": "Pieczęć zakładu pracy"
     },
     {
