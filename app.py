@@ -131,9 +131,9 @@ def wykryj_miesiac(text):
     return f"wrzesień {rok}"
 
 st.title("📄 Generator Zaświadczenia dla MOPS")
-st.write("Wgraj plik listy płac (zdjęcie JPG/PNG lub dokument PDF). System rozpozna pracownika z bazy i przeliczy dochód netto.")
+st.write("Wgraj plik listy płac (JPG, PNG lub PDF). System rozpozna pracownika z bazy i przeliczy dochód netto.")
 
-# Wyraźne zezwolenie na pliki JPG, JPEG, PNG i PDF
+# Sekcja wgrywania pliku (jawnie dozwolone pliki PDF)
 uploaded_lista = st.file_uploader("Wgraj plik Listy Płac (Zdjęcie lub PDF)", type=["jpg", "jpeg", "png", "pdf"])
 
 # Przetwarzanie nowo wgranego pliku
