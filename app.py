@@ -20,6 +20,9 @@ uploaded_lista = st.file_uploader("2. Wgraj zdjęcie / skan Listy Płac", type=[
 if "data_extracted" not in st.session_state:
     st.session_state.data_extracted = False
 
+if "pdf_generated" not in st.session_state:
+    st.session_state.pdf_generated = False
+
 if uploaded_wniosek and uploaded_lista and not st.session_state.data_extracted:
     with st.spinner("Trwa odczytywanie danych ze zdjęć (OCR)... Proszę czekać..."):
         try:
@@ -69,7 +72,7 @@ if st.session_state.data_extracted:
         
         st.info(f"**7. DOCHÓD NETTO (obliczony automatycznie):** {dochod:.2f} zł")
         
-        submitted = st.form_submit_button("Generuj i pobierz PDF")
+        submitted = st.form_submit_button("Generuj PDF")
         
         if submitted:
             pdf_filename = "zaswiadczenie_mops.pdf"
@@ -105,9 +108,13 @@ if st.session_state.data_extracted:
             c.drawString(50, height - 415, "Pieczęć i podpis osoby upoważnionej")
             
             c.save()
-            
-            st.success("PDF został pomyślnie wygenerowany!")
-            with open(pdf_filename, "rb") as file:
+            st.session_state.pdf_generated = True
+
+    # Przycisk pobierania umieszczony POZA formularzem
+    if st.session_state.pdf_generated:
+        st.success("PDF został pomyślnie wygenerowany!")
+        if os.path.exists("zaswiadczenie_mops.pdf"):
+            with open("zaswiadczenie_mops.pdf", "rb") as file:
                 st.download_button(
                     label="📥 Pobierz gotowy PDF",
                     data=file,
