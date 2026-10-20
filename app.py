@@ -136,14 +136,11 @@ def wykryj_miesiac(text):
 def wykryj_kwoty(text):
     kwoty = {}
     
-    # 1. Dedykowana obsługa Kolumny 9 (Ubezp. zdr. w sekcji Potrącenia)
-    # Kolumna 5 zawiera "Ubezp.zdrow." (odliczenie od podatku = 0.00), natomiast Kolumna 9 "Ubezp. zdr." zawiera pełną składkę (35.63 zł).
-    
+    # Obsługa Kolumny 9 (Ubezp. zdr. w sekcji Potrącenia)
     match_35 = re.search(r'\b35[\.,]63\b', text)
     if match_35:
         kwoty['zdrowotna'] = 35.63
     else:
-        # Szukanie pierwszej dodatniej kwoty po frazie "Ubezp. zdr" (ze spacją - Kolumna 9)
         zdr_pos = text.lower().find("ubezp. zdr")
         if zdr_pos != -1:
             fragment = text[zdr_pos:zdr_pos+250]
@@ -154,7 +151,6 @@ def wykryj_kwoty(text):
                     kwoty['zdrowotna'] = val
                     break
         
-        # Jeśli nie znaleziono, przeszukajmy fragment po "potrącenia"
         if 'zdrowotna' not in kwoty:
             potracenia_pos = text.lower().find("potrącenia")
             if potracenia_pos != -1:
@@ -180,7 +176,6 @@ if uploaded_lista is not None and st.session_state.last_uploaded_file != uploade
         
         st.session_state.miesiac = wykryj_miesiac(ocr_text)
         
-        # Wykrywanie kwot z pliku (pobranie składki zdrowotnej z Kolumny 9)
         odczytane_kwoty = wykryj_kwoty(ocr_text)
         if 'zdrowotna' in odczytane_kwoty:
             st.session_state.zdrowotna = odczytane_kwoty['zdrowotna']
@@ -278,24 +273,40 @@ if uploaded_lista is not None:
             y -= 20
             c.drawString(50, y, f"na stanowisku {stanowisko}")
             
-            # --- TABELA WYLICZEŃ ---
+            # --- TABELA WYLICZEŃ (WYJUSTOWANIE KWOT DO PRAWEJ STRONY) ---
             y -= 30
+            c.setFont(FONT_NAME, 9)
             c.drawString(50, y, "1. Przychód z tytułu wynagrodzenia")
             y -= 15
-            c.drawString(65, y, f"za pracę w miesiącu {miesiac}: {przychod:.2f} zł")
+            c.drawString(65, y, f"za pracę w miesiącu {miesiac}:")
+            c.drawRightString(width - 50, y, f"{przychod:.2f} zł")
+            
             y -= 20
-            c.drawString(50, y, f"2. Koszty uzyskania przychodu: {koszty:.2f} zł")
+            c.drawString(50, y, "2. Koszty uzyskania przychodu:")
+            c.drawRightString(width - 50, y, f"{koszty:.2f} zł")
+            
             y -= 20
-            c.drawString(50, y, f"3. Miesięczne obciążenie podatkiem dochodowym od osób fizycznych: {podatek:.2f} zł")
+            c.drawString(50, y, "3. Miesięczne obciążenie podatkiem dochodowym od osób fizycznych:")
+            c.drawRightString(width - 50, y, f"{podatek:.2f} zł")
+            
             y -= 20
-            c.drawString(50, y, f"4. Kwota składki na ubezpieczenie zdrowotne: {zdrowotna:.2f} zł")
+            c.drawString(50, y, "4. Kwota składki na ubezpieczenie zdrowotne:")
+            c.drawRightString(width - 50, y, f"{zdrowotna:.2f} zł")
+            
             y -= 20
-            c.drawString(50, y, f"5. Kwota składki na ubezpieczenie emerytalne i rentowe w części finansowanej przez Ubezpieczonego: {spoleczne:.2f} zł")
+            c.drawString(50, y, "5. Kwota składki na ubezpieczenie emerytalne i rentowe")
+            y -= 15
+            c.drawString(65, y, "w części finansowanej przez Ubezpieczonego:")
+            c.drawRightString(width - 50, y, f"{spoleczne:.2f} zł")
+            
             y -= 20
-            c.drawString(50, y, f"6. Kwota składki na ubezpieczenie chorobowe: {chorobowa:.2f} zł")
-            y -= 20
+            c.drawString(50, y, "6. Kwota składki na ubezpieczenie chorobowe:")
+            c.drawRightString(width - 50, y, f"{chorobowa:.2f} zł")
+            
+            y -= 25
             c.setFont(FONT_NAME, 10)
-            c.drawString(50, y, f"7. DOCHÓD = 1 - (2+3+4+5+6): {dochod:.2f} zł")
+            c.drawString(50, y, "7. DOCHÓD = 1 - (2+3+4+5+6):")
+            c.drawRightString(width - 50, y, f"{dochod:.2f} zł")
             
             # --- STOPKA / PODPIS ---
             y -= 90
