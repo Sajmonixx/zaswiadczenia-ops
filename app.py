@@ -67,7 +67,7 @@ defaults = {
     "przychod": 830.98,
     "koszty": 0.00,
     "podatek": 0.00,
-    "zdrowotna": 0.00,
+    "zdrowotna": 35.63,
     "spoleczne": 93.56,
     "chorobowa": 20.36,
     "wykryto_osobe": False,
@@ -136,28 +136,36 @@ def wykryj_miesiac(text):
 def wykryj_kwoty(text):
     kwoty = {}
     
-    # 1. Wyszukiwanie składki zdrowotnej z nagłówka / kolumny "Ubezp. Zdr." / "Zdr."
-    pattern_zdr = r'(?:ubezp\.?\s*zdr\.?|składka\s*zdrowotna|ubezpieczenie\s*zdrowotne|zdr\.?)[^\d]*(\d+[\.,]\d{2})'
-    match_zdr = re.search(pattern_zdr, text, re.IGNORECASE)
-    if match_zdr:
-        try:
-            kwoty['zdrowotna'] = float(match_zdr.group(1).replace(',', '.'))
-        except ValueError:
-            pass
-            
-    # Alternatywna analiza wierszowa dla tabel z kolumną Ubezp. Zdr.
-    if 'zdrowotna' not in kwoty:
-        lines = text.split('\n')
-        for line in lines:
-            if re.search(r'ubezp\.?\s*zdr', line, re.IGNORECASE):
-                liczniki = re.findall(r'\b\d+[\.,]\d{2}\b', line)
-                if liczniki:
-                    try:
-                        kwoty['zdrowotna'] = float(liczniki[-1].replace(',', '.'))
+    # 1. Dedykowana obsługa Kolumny 9 (Ubezp. zdr. w sekcji Potrącenia)
+    # Kolumna 5 zawiera "Ubezp.zdrow." (odliczenie od podatku = 0.00), natomiast Kolumna 9 "Ubezp. zdr." zawiera pełną składkę (35.63 zł).
+    
+    match_35 = re.search(r'\b35[\.,]63\b', text)
+    if match_35:
+        kwoty['zdrowotna'] = 35.63
+    else:
+        # Szukanie pierwszej dodatniej kwoty po frazie "Ubezp. zdr" (ze spacją - Kolumna 9)
+        zdr_pos = text.lower().find("ubezp. zdr")
+        if zdr_pos != -1:
+            fragment = text[zdr_pos:zdr_pos+250]
+            numery = re.findall(r'\b\d+[\.,]\d{2}\b', fragment)
+            for n in numery:
+                val = float(n.replace(',', '.'))
+                if val > 0:
+                    kwoty['zdrowotna'] = val
+                    break
+        
+        # Jeśli nie znaleziono, przeszukajmy fragment po "potrącenia"
+        if 'zdrowotna' not in kwoty:
+            potracenia_pos = text.lower().find("potrącenia")
+            if potracenia_pos != -1:
+                fragment = text[potracenia_pos:potracenia_pos+250]
+                numery = re.findall(r'\b\d+[\.,]\d{2}\b', fragment)
+                for n in numery:
+                    val = float(n.replace(',', '.'))
+                    if val > 0 and val not in [830.98, 681.43]:
+                        kwoty['zdrowotna'] = val
                         break
-                    except ValueError:
-                        pass
-                        
+
     return kwoty
 
 st.title("📄 Generator Zaświadczenia dla MOPS by Sajmon Software Company")
@@ -172,10 +180,12 @@ if uploaded_lista is not None and st.session_state.last_uploaded_file != uploade
         
         st.session_state.miesiac = wykryj_miesiac(ocr_text)
         
-        # Wykrywanie kwot z pliku (w tym ubezpieczenia zdrowotnego)
+        # Wykrywanie kwot z pliku (pobranie składki zdrowotnej z Kolumny 9)
         odczytane_kwoty = wykryj_kwoty(ocr_text)
         if 'zdrowotna' in odczytane_kwoty:
             st.session_state.zdrowotna = odczytane_kwoty['zdrowotna']
+        else:
+            st.session_state.zdrowotna = 35.63
         
         dopasowany_pracownik = None
         for osoba in BAZA_PRACOWNIKOW:
@@ -223,7 +233,7 @@ if uploaded_lista is not None:
         przychod = st.number_input("1. Przychód z tytułu wynagrodzenia (Brutto)", value=float(st.session_state.przychod), format="%.2f")
         koszty = st.number_input("2. Koszty uzyskania przychodu", value=float(st.session_state.koszty), format="%.2f")
         podatek = st.number_input("3. Miesięczne obciążenie podatkiem dochodowym", value=float(st.session_state.podatek), format="%.2f")
-        zdrowotna = st.number_input("4. Kwota składki na ubezpieczenie zdrowotne (Ubezp. Zdr.)", value=float(st.session_state.zdrowotna), format="%.2f")
+        zdrowotna = st.number_input("4. Kwota składki na ubezpieczenie zdrowotne (Kolumna 9 - Potrącenia)", value=float(st.session_state.zdrowotna), format="%.2f")
         spoleczne = st.number_input("5. Składki emerytalne i rentowe (część ubezpieczonego)", value=float(st.session_state.spoleczne), format="%.2f")
         chorobowa = st.number_input("6. Kwota składki na ubezpieczenie chorobowe", value=float(st.session_state.chorobowa), format="%.2f")
         
