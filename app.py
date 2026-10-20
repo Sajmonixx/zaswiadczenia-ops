@@ -304,4 +304,31 @@ if uploaded_lista is not None:
             
             y -= 22
             c.drawString(50, y, "6. Kwota składki na ubezpieczenie chorobowe:")
-            c.drawRightString(width -
+            c.drawRightString(width - 50, y, f"{chorobowa:.2f} zł")
+            
+            y -= 28
+            c.setFont(FONT_NAME, 11.5)
+            c.drawString(50, y, "7. DOCHÓD = 1 - (2+3+4+5+6):")
+            c.drawRightString(width - 50, y, f"{dochod:.2f} zł")
+            
+            # --- STOPKA / PODPIS ---
+            y -= 80
+            c.setFont(FONT_NAME, 10)
+            c.drawRightString(width - 50, y, "....................................................................")
+            c.drawRightString(width - 50, y - 16, "Pieczęć i podpis pracodawcy")
+            
+            c.save()
+            st.session_state.pdf_generated = True
+
+    if st.session_state.pdf_generated:
+        st.success("PDF został pomyślnie wygenerowany!")
+        if os.path.exists("zaswiadczenie_mops.pdf"):
+            with open("zaswiadczenie_mops.pdf", "rb") as pdf_file:
+                st.download_button(
+                    label="📥 Pobierz gotowy PDF",
+                    data=pdf_file,
+                    file_name="zaswiadczenie_wypelnione.pdf",
+                    mime="application/pdf"
+                )
+else:
+    st.info("💡 Wgraj plik z listą płac (zdjęcie JPG/PNG lub plik PDF) powyżej, aby automatycznie odczytać dane i wygenerować zaświadczenie.")
