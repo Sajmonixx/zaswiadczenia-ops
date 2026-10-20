@@ -53,7 +53,7 @@ BAZA_PRACOWNIKOW = [
 ]
 
 # ==============================================================================
-# INICJALIZACJA DOMYŚLNYCH ZMIENNYCH SESJI (Z DYNAMICZNĄ DATĄ DZISIEJSZĄ)
+# INICJALIZACJA DOMYŚLNYCH ZMIENNYCH SESJI
 # ==============================================================================
 dzisiejsza_data = datetime.now().strftime("%d.%m.%Y r.")
 
@@ -139,7 +139,6 @@ def wykryj_miesiac(text):
 def wykryj_kwoty(text):
     kwoty = {}
     
-    # Obsługa Kolumny 9 (Ubezp. zdr. w sekcji Potrącenia)
     match_35 = re.search(r'\b35[\.,]63\b', text)
     if match_35:
         kwoty['zdrowotna'] = 35.63
@@ -178,8 +177,6 @@ if uploaded_lista is not None and st.session_state.last_uploaded_file != uploade
         ocr_text = odczytaj_tekst_z_pliku(uploaded_lista)
         
         st.session_state.miesiac = wykryj_miesiac(ocr_text)
-        
-        # Aktualizacja daty wystawienia na dzisiejszą
         st.session_state.miejscowosc_data = f"Ostrów Wielkopolski, {datetime.now().strftime('%d.%m.%Y r.')}"
         
         odczytane_kwoty = wykryj_kwoty(ocr_text)
@@ -250,88 +247,61 @@ if uploaded_lista is not None:
             c = canvas.Canvas(pdf_filename, pagesize=A4)
             width, height = A4
             
-            # --- NAGŁÓWEK ---
-            c.setFont(FONT_NAME, 9)
+            # --- NAGŁÓWEK (Powiększona czcionka 10pt) ---
+            c.setFont(FONT_NAME, 10)
             y_stamp = height - 50
             for line in pracodawca.split("\n"):
                 c.drawString(50, y_stamp, line)
-                y_stamp -= 12
+                y_stamp -= 14
                 
             c.drawRightString(width - 50, height - 50, miejscowosc_data)
             
-            # --- TYTUŁ DOKUMENTU ---
-            c.setFont(FONT_NAME, 10)
-            c.drawCentredString(width / 2, height - 110, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA Z TYTUŁU ZATRUDNIENIA")
-            c.drawCentredString(width / 2, height - 124, "DLA CELÓW POMOCY SPOŁECZNEJ")
+            # --- TYTUŁ DOKUMENTU (Zwiększony odstęp od nagłówka, powiększony do 11.5pt) ---
+            c.setFont(FONT_NAME, 11.5)
+            c.drawCentredString(width / 2, height - 135, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA Z TYTUŁU ZATRUDNIENIA")
+            c.drawCentredString(width / 2, height - 152, "DLA CELÓW POMOCY SPOŁECZNEJ")
             
-            # --- DANE OSOBOWE I ZATRUDNIENIA ---
-            y = height - 150
-            c.setFont(FONT_NAME, 9)
+            # --- DANE OSOBOWE I ZATRUDNIENIA (Powiększona czcionka 10.5pt) ---
+            y = height - 185
+            c.setFont(FONT_NAME, 10.5)
             c.drawString(50, y, "Zaświadcza się, że")
-            y -= 15
+            y -= 18
             c.drawString(50, y, f"Pan/i. {imie}")
-            y -= 20
+            y -= 22
             c.drawString(50, y, f"Zamieszkały(a) {adres}")
-            y -= 20
+            y -= 22
             c.drawString(50, y, f"Jest zatrudniony (a) {firma_zatrudniajaca}")
-            y -= 20
+            y -= 22
             c.drawString(50, y, f"na podstawie {umowa_rodzaj}    w okresie {okres}")
-            y -= 20
+            y -= 22
             c.drawString(50, y, f"na stanowisku {stanowisko}")
             
-            # --- TABELA WYLICZEŃ (WYJUSTOWANIE KWOT DO PRAWEJ STRONY) ---
-            y -= 30
-            c.setFont(FONT_NAME, 9)
+            # --- TABELA WYLICZEŃ (Powiększona czcionka 10.5pt, kwoty do prawej) ---
+            y -= 35
+            c.setFont(FONT_NAME, 10.5)
             c.drawString(50, y, "1. Przychód z tytułu wynagrodzenia")
-            y -= 15
+            y -= 16
             c.drawString(65, y, f"za pracę w miesiącu {miesiac}:")
             c.drawRightString(width - 50, y, f"{przychod:.2f} zł")
             
-            y -= 20
+            y -= 22
             c.drawString(50, y, "2. Koszty uzyskania przychodu:")
             c.drawRightString(width - 50, y, f"{koszty:.2f} zł")
             
-            y -= 20
+            y -= 22
             c.drawString(50, y, "3. Miesięczne obciążenie podatkiem dochodowym od osób fizycznych:")
             c.drawRightString(width - 50, y, f"{podatek:.2f} zł")
             
-            y -= 20
+            y -= 22
             c.drawString(50, y, "4. Kwota składki na ubezpieczenie zdrowotne:")
             c.drawRightString(width - 50, y, f"{zdrowotna:.2f} zł")
             
-            y -= 20
+            y -= 22
             c.drawString(50, y, "5. Kwota składki na ubezpieczenie emerytalne i rentowe")
-            y -= 15
+            y -= 16
             c.drawString(65, y, "w części finansowanej przez Ubezpieczonego:")
             c.drawRightString(width - 50, y, f"{spoleczne:.2f} zł")
             
-            y -= 20
+            y -= 22
             c.drawString(50, y, "6. Kwota składki na ubezpieczenie chorobowe:")
-            c.drawRightString(width - 50, y, f"{chorobowa:.2f} zł")
-            
-            y -= 25
-            c.setFont(FONT_NAME, 10)
-            c.drawString(50, y, "7. DOCHÓD = 1 - (2+3+4+5+6):")
-            c.drawRightString(width - 50, y, f"{dochod:.2f} zł")
-            
-            # --- STOPKA / PODPIS ---
-            y -= 90
-            c.setFont(FONT_NAME, 9)
-            c.drawRightString(width - 50, y, "....................................................................")
-            c.drawRightString(width - 50, y - 15, "Pieczęć i podpis pracodawcy")
-            
-            c.save()
-            st.session_state.pdf_generated = True
-
-    if st.session_state.pdf_generated:
-        st.success("PDF został pomyślnie wygenerowany!")
-        if os.path.exists("zaswiadczenie_mops.pdf"):
-            with open("zaswiadczenie_mops.pdf", "rb") as pdf_file:
-                st.download_button(
-                    label="📥 Pobierz gotowy PDF",
-                    data=pdf_file,
-                    file_name="zaswiadczenie_wypelnione.pdf",
-                    mime="application/pdf"
-                )
-else:
-    st.info("💡 Wgraj plik z listą płac (zdjęcie JPG/PNG lub plik PDF) powyżej, aby automatycznie odczytać dane i wygenerować zaświadczenie.")
+            c.drawRightString(width -
