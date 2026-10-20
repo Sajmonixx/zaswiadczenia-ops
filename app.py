@@ -82,11 +82,18 @@ for klucz, wartosc in defaults.items():
     if klucz not in st.session_state:
         st.session_state[klucz] = wartosc
 
-# Rejestracja czcionki z obsługą polskich znaków
+# Rejestracja czcionki z obsługą polskich znaków (w tym czcionki pogrubionej)
 FONT_NAME = "Helvetica"
+FONT_NAME_BOLD = "Helvetica-Bold"
+
 if os.path.exists("Roboto-Regular.ttf"):
     pdfmetrics.registerFont(TTFont("Roboto", "Roboto-Regular.ttf"))
     FONT_NAME = "Roboto"
+    FONT_NAME_BOLD = "Roboto"
+
+if os.path.exists("Roboto-Bold.ttf"):
+    pdfmetrics.registerFont(TTFont("Roboto-Bold", "Roboto-Bold.ttf"))
+    FONT_NAME_BOLD = "Roboto-Bold"
 
 def odczytaj_tekst_z_pliku(uploaded_file):
     filename = uploaded_file.name.lower()
@@ -256,10 +263,18 @@ if uploaded_lista is not None:
                 
             c.drawRightString(width - 50, height - 50, miejscowosc_data)
             
-            # --- TYTUŁ DOKUMENTU ---
-            c.setFont(FONT_NAME, 11.5)
-            c.drawCentredString(width / 2, height - 160, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA Z TYTUŁU ZATRUDNIENIA")
-            c.drawCentredString(width / 2, height - 178, "DLA CELÓW POMOCY SPOŁECZNEJ")
+            # --- TYTUŁ DOKUMENTU (POGRUBIONA CZCIONKA) ---
+            t1 = "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA Z TYTUŁU ZATRUDNIENIA"
+            t2 = "DLA CELÓW POMOCY SPOŁECZNEJ"
+            
+            c.setFont(FONT_NAME_BOLD, 11.5)
+            c.drawCentredString(width / 2, height - 160, t1)
+            c.drawCentredString(width / 2, height - 178, t2)
+            
+            # Dodatkowe wyostrzenie pogrubienia (efekt bold dla czcionek ttf)
+            if FONT_NAME_BOLD == FONT_NAME:
+                c.drawCentredString(width / 2 + 0.3, height - 160, t1)
+                c.drawCentredString(width / 2 + 0.3, height - 178, t2)
             
             # --- DANE OSOBOWE I ZATRUDNIENIA ---
             y = height - 215
@@ -307,9 +322,12 @@ if uploaded_lista is not None:
             c.drawRightString(width - 50, y, f"{chorobowa:.2f} zł")
             
             y -= 28
-            c.setFont(FONT_NAME, 11.5)
+            c.setFont(FONT_NAME_BOLD, 11.5)
             c.drawString(50, y, "7. DOCHÓD = 1 - (2+3+4+5+6):")
             c.drawRightString(width - 50, y, f"{dochod:.2f} zł")
+            if FONT_NAME_BOLD == FONT_NAME:
+                c.drawString(50.3, y, "7. DOCHÓD = 1 - (2+3+4+5+6):")
+                c.drawRightString((width - 50) + 0.3, y, f"{dochod:.2f} zł")
             
             # --- STOPKA / PODPIS (WYŚRODKOWANIE PODPISU POD KROPKAMI) ---
             y -= 80
