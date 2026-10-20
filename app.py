@@ -112,7 +112,7 @@ def odczytaj_tekst_z_pliku(uploaded_file):
         except Exception:
             pass
             
-    return extracted_text.lower()
+    return extracted_text
 
 def wykryj_miesiac(text):
     text_clean = re.sub(r'stycznia', '', text, flags=re.IGNORECASE)
@@ -129,9 +129,36 @@ def wykryj_miesiac(text):
     rok = rok_match.group(0) if rok_match else "2026"
     
     for klucz, nazwa in miesiace_dict.items():
-        if klucz in text_clean:
+        if klucz in text_clean.lower():
             return f"{nazwa} {rok}"
     return f"wrzesień {rok}"
+
+def wykryj_kwoty(text):
+    kwoty = {}
+    
+    # 1. Wyszukiwanie składki zdrowotnej z nagłówka / kolumny "Ubezp. Zdr." / "Zdr."
+    pattern_zdr = r'(?:ubezp\.?\s*zdr\.?|składka\s*zdrowotna|ubezpieczenie\s*zdrowotne|zdr\.?)[^\d]*(\d+[\.,]\d{2})'
+    match_zdr = re.search(pattern_zdr, text, re.IGNORECASE)
+    if match_zdr:
+        try:
+            kwoty['zdrowotna'] = float(match_zdr.group(1).replace(',', '.'))
+        except ValueError:
+            pass
+            
+    # Alternatywna analiza wierszowa dla tabel z kolumną Ubezp. Zdr.
+    if 'zdrowotna' not in kwoty:
+        lines = text.split('\n')
+        for line in lines:
+            if re.search(r'ubezp\.?\s*zdr', line, re.IGNORECASE):
+                liczniki = re.findall(r'\b\d+[\.,]\d{2}\b', line)
+                if liczniki:
+                    try:
+                        kwoty['zdrowotna'] = float(liczniki[-1].replace(',', '.'))
+                        break
+                    except ValueError:
+                        pass
+                        
+    return kwoty
 
 st.title("📄 Generator Zaświadczenia dla MOPS by Sajmon Software Company")
 st.write("Wgraj plik listy płac (zdjęcie JPG/PNG lub dokument PDF). System automatycznie rozpozna pracownika z bazy i przygotuje formularz.")
@@ -145,9 +172,14 @@ if uploaded_lista is not None and st.session_state.last_uploaded_file != uploade
         
         st.session_state.miesiac = wykryj_miesiac(ocr_text)
         
+        # Wykrywanie kwot z pliku (w tym ubezpieczenia zdrowotnego)
+        odczytane_kwoty = wykryj_kwoty(ocr_text)
+        if 'zdrowotna' in odczytane_kwoty:
+            st.session_state.zdrowotna = odczytane_kwoty['zdrowotna']
+        
         dopasowany_pracownik = None
         for osoba in BAZA_PRACOWNIKOW:
-            if osoba["klucz_nazwisko"].lower() in ocr_text:
+            if osoba["klucz_nazwisko"].lower() in ocr_text.lower():
                 dopasowany_pracownik = osoba
                 break
         
@@ -191,7 +223,7 @@ if uploaded_lista is not None:
         przychod = st.number_input("1. Przychód z tytułu wynagrodzenia (Brutto)", value=float(st.session_state.przychod), format="%.2f")
         koszty = st.number_input("2. Koszty uzyskania przychodu", value=float(st.session_state.koszty), format="%.2f")
         podatek = st.number_input("3. Miesięczne obciążenie podatkiem dochodowym", value=float(st.session_state.podatek), format="%.2f")
-        zdrowotna = st.number_input("4. Kwota składki na ubezpieczenie zdrowotne", value=float(st.session_state.zdrowotna), format="%.2f")
+        zdrowotna = st.number_input("4. Kwota składki na ubezpieczenie zdrowotne (Ubezp. Zdr.)", value=float(st.session_state.zdrowotna), format="%.2f")
         spoleczne = st.number_input("5. Składki emerytalne i rentowe (część ubezpieczonego)", value=float(st.session_state.spoleczne), format="%.2f")
         chorobowa = st.number_input("6. Kwota składki na ubezpieczenie chorobowe", value=float(st.session_state.chorobowa), format="%.2f")
         
