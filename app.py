@@ -167,7 +167,7 @@ def wykryj_kwoty(text):
     return kwoty
 
 st.title("📄 Generator Zaświadczenia dla MOPS by Sajmon Software Company")
-st.write("Wgraj plik lists płac (zdjęcie JPG/PNG lub dokument PDF). System automatycznie rozpozna pracownika z bazy i przygotuje formularz.")
+st.write("Wgraj plik listy płac (zdjęcie JPG/PNG lub dokument PDF). System automatycznie rozpozna pracownika z bazy i przygotuje formularz.")
 
 uploaded_lista = st.file_uploader("Wgraj plik Listy Płac (Zdjęcie lub PDF)", type=["jpg", "jpeg", "png", "pdf"])
 
@@ -256,7 +256,7 @@ if uploaded_lista is not None:
                 
             c.drawRightString(width - 50, height - 50, miejscowosc_data)
             
-            # --- TYTUŁ DOKUMENTU (Zwiększony odstęp od nagłówka: height - 160) ---
+            # --- TYTUŁ DOKUMENTU ---
             c.setFont(FONT_NAME, 11.5)
             c.drawCentredString(width / 2, height - 160, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA Z TYTUŁU ZATRUDNIENIA")
             c.drawCentredString(width / 2, height - 178, "DLA CELÓW POMOCY SPOŁECZNEJ")
@@ -311,11 +311,15 @@ if uploaded_lista is not None:
             c.drawString(50, y, "7. DOCHÓD = 1 - (2+3+4+5+6):")
             c.drawRightString(width - 50, y, f"{dochod:.2f} zł")
             
-            # --- STOPKA / PODPIS ---
+            # --- STOPKA / PODPIS (WYŚRODKOWANIE PODPISU POD KROPKAMI) ---
             y -= 80
             c.setFont(FONT_NAME, 10)
-            c.drawRightString(width - 50, y, "....................................................................")
-            c.drawRightString(width - 50, y - 16, "Pieczęć i podpis pracodawcy")
+            kropki = "...................................................................."
+            c.drawRightString(width - 50, y, kropki)
+            
+            szerokosc_kropek = c.stringWidth(kropki, FONT_NAME, 10)
+            srodek_kropek = (width - 50) - (szerokosc_kropek / 2)
+            c.drawCentredString(srodek_kropek, y - 16, "Pieczęć i podpis pracodawcy")
             
             c.save()
             st.session_state.pdf_generated = True
