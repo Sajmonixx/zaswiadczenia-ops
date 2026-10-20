@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 import numpy as np
 from PIL import Image
 import streamlit as st
@@ -30,9 +31,9 @@ BAZA_PRACOWNIKOW = [
         "pracodawca_pieczec": "Pieczęć zakładu pracy"
     },
     {
-        "klucz_nazwisko": "kowalski",
-        "imie": "Jan Kowalski",
-        "adres": "ul. Słoneczna 15, 63-900 Ostrów Wlkp.",
+        "klucz_nazwisko": "glowacka",
+        "imie": "Oliwia Głowacka",
+        "adres": "Koźminiec 78",
         "firma_zatrudniajaca": "Foto Szymon Ostrowski, Plac 23 Stycznia 18, 63-400 Ostrów Wielkopolski",
         "umowa_rodzaj": "Umowa o pracę na czas nieokreślony",
         "okres": "od 01.09.2025 r. do 31.08.2028",
@@ -40,23 +41,25 @@ BAZA_PRACOWNIKOW = [
         "pracodawca_pieczec": "Pieczęć zakładu pracy"
     },
     {
-        "klucz_nazwisko": "nowak",
-        "imie": "Anna Nowak",
-        "adres": "ul. Długa 4/2, 63-900 Ostrów Wlkp.",
-        "firma_zatrudniajaca": "Foto Szymon Ostrowski, Plac 23 Stycznia 18, 63-400 Ostrów Wielkopolski",
+        "klucz_nazwisko": "szelag",
+        "imie": "Adrianna Szeląg",
+        "adres": "ul. Kolejowa 15/15",
+        "firma_zatrudniajaca": "Foto Kamila Ostrowska, ul. Warmińska 2a, 63-400 Ostrów Wielkopolski",
         "umowa_rodzaj": "Umowa o pracę na czas nieokreślony",
-        "okres": "od 01.09.2025 r. do 31.08.2028",
+        "okres": "02.09.2024 - 01.09.2027",
         "stanowisko": "Fotograf",
         "pracodawca_pieczec": "Pieczęć zakładu pracy"
     }
 ]
 
 # ==============================================================================
-# INICJALIZACJA DOMYŚLNYCH ZMIENNYCH SESJI
+# INICJALIZACJA DOMYŚLNYCH ZMIENNYCH SESJI (Z DYNAMICZNĄ DATĄ DZISIEJSZĄ)
 # ==============================================================================
+dzisiejsza_data = datetime.now().strftime("%d.%m.%Y r.")
+
 defaults = {
     "pracodawca": "Pieczęć zakładu pracy",
-    "miejscowosc_data": "Ostrów Wielkopolski, 19.10.2026 r.",
+    "miejscowosc_data": f"Ostrów Wielkopolski, {dzisiejsza_data}",
     "imie": "",
     "adres": "",
     "firma_zatrudniajaca": "Foto Szymon Ostrowski, Plac 23 Stycznia 18, 63-400 Ostrów Wielkopolski",
@@ -175,6 +178,9 @@ if uploaded_lista is not None and st.session_state.last_uploaded_file != uploade
         ocr_text = odczytaj_tekst_z_pliku(uploaded_lista)
         
         st.session_state.miesiac = wykryj_miesiac(ocr_text)
+        
+        # Aktualizacja daty wystawienia na dzisiejszą
+        st.session_state.miejscowosc_data = f"Ostrów Wielkopolski, {datetime.now().strftime('%d.%m.%Y r.')}"
         
         odczytane_kwoty = wykryj_kwoty(ocr_text)
         if 'zdrowotna' in odczytane_kwoty:
