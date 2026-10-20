@@ -167,7 +167,7 @@ def wykryj_kwoty(text):
     return kwoty
 
 st.title("📄 Generator Zaświadczenia dla MOPS by Sajmon Software Company")
-st.write("Wgraj plik listy płac (zdjęcie JPG/PNG lub dokument PDF). System automatycznie rozpozna pracownika z bazy i przygotuje formularz.")
+st.write("Wgraj plik lists płac (zdjęcie JPG/PNG lub dokument PDF). System automatycznie rozpozna pracownika z bazy i przygotuje formularz.")
 
 uploaded_lista = st.file_uploader("Wgraj plik Listy Płac (Zdjęcie lub PDF)", type=["jpg", "jpeg", "png", "pdf"])
 
@@ -247,7 +247,7 @@ if uploaded_lista is not None:
             c = canvas.Canvas(pdf_filename, pagesize=A4)
             width, height = A4
             
-            # --- NAGŁÓWEK (Powiększona czcionka 10pt) ---
+            # --- NAGŁÓWEK ---
             c.setFont(FONT_NAME, 10)
             y_stamp = height - 50
             for line in pracodawca.split("\n"):
@@ -256,13 +256,13 @@ if uploaded_lista is not None:
                 
             c.drawRightString(width - 50, height - 50, miejscowosc_data)
             
-            # --- TYTUŁ DOKUMENTU (Zwiększony odstęp od nagłówka, powiększony do 11.5pt) ---
+            # --- TYTUŁ DOKUMENTU (Zwiększony odstęp od nagłówka: height - 160) ---
             c.setFont(FONT_NAME, 11.5)
-            c.drawCentredString(width / 2, height - 135, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA Z TYTUŁU ZATRUDNIENIA")
-            c.drawCentredString(width / 2, height - 152, "DLA CELÓW POMOCY SPOŁECZNEJ")
+            c.drawCentredString(width / 2, height - 160, "ZAŚWIADCZENIE O WYSOKOŚCI WYNAGRODZENIA Z TYTUŁU ZATRUDNIENIA")
+            c.drawCentredString(width / 2, height - 178, "DLA CELÓW POMOCY SPOŁECZNEJ")
             
-            # --- DANE OSOBOWE I ZATRUDNIENIA (Powiększona czcionka 10.5pt) ---
-            y = height - 185
+            # --- DANE OSOBOWE I ZATRUDNIENIA ---
+            y = height - 215
             c.setFont(FONT_NAME, 10.5)
             c.drawString(50, y, "Zaświadcza się, że")
             y -= 18
@@ -276,7 +276,7 @@ if uploaded_lista is not None:
             y -= 22
             c.drawString(50, y, f"na stanowisku {stanowisko}")
             
-            # --- TABELA WYLICZEŃ (Powiększona czcionka 10.5pt, kwoty do prawej) ---
+            # --- TABELA WYLICZEŃ (WYJUSTOWANIE KWOT DO PRAWEJ STRONY) ---
             y -= 35
             c.setFont(FONT_NAME, 10.5)
             c.drawString(50, y, "1. Przychód z tytułu wynagrodzenia")
